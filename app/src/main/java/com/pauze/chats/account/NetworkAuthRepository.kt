@@ -60,8 +60,15 @@ class NetworkAuthRepository(
             val result = api.refresh(refreshToken)
             persist(result.session)
             result.session
-        }.getOrElse {
-            sessionStore.clear()
+        }.getOrElse { error ->
+            val invalidRefresh =
+                error is AuthApiException &&
+                    error.errorCode == "invalid_refresh_token"
+
+            if (invalidRefresh) {
+                sessionStore.clear()
+            }
+
             null
         }
     }
