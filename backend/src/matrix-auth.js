@@ -2,6 +2,7 @@
  * Copyright © 2026 Aarav Singh (Pauze). All rights reserved.
  */
 
+import { randomUUID } from "node:crypto";
 import { SignJWT } from "jose";
 
 const MATRIX_TOKEN_TTL_SECONDS = 60;
@@ -47,7 +48,7 @@ export function createMatrixTokenService({
             .setAudience(audience)
             .setIssuedAt(now)
             .setExpirationTime(now + ttlSeconds)
-            .setJti(crypto.randomUUID())
+            .setJti(randomUUID())
             .sign(jwtKey);
     }
 
