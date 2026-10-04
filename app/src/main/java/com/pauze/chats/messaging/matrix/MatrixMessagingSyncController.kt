@@ -19,7 +19,7 @@ class MatrixMessagingSyncController(
 
     suspend fun start(): Result<Unit> = withContext(Dispatchers.IO) {
         runCatching {
-            check(taskHandle == null || taskHandle?.isFinished == true) {
+            check(taskHandle == null || taskHandle?.isFinished() == true) {
                 "Matrix sync is already running"
             }
 
@@ -28,7 +28,7 @@ class MatrixMessagingSyncController(
 
             taskHandle = client.syncV2(
                 SyncSettingsV2(
-                    timeoutMs = 30_000L,
+                    timeoutMs = 30_000UL,
                     fullState = false
                 ),
                 MatrixSyncListener
