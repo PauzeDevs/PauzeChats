@@ -57,5 +57,5 @@ dependencies {
 
     debugImplementation("androidx.compose.ui:ui-tooling")
 
-    testImplementation("org.jetbrains.kotlin:kotlin-test:2.3.21")
+    testImplementation("org.jetbrains.kotlin:kotlin-test:2.2.10")
 }
