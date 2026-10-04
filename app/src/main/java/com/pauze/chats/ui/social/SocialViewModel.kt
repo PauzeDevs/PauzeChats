@@ -39,15 +39,21 @@ class SocialViewModel(
         _state.value = _state.value.copy(isLoading = true, message = null)
 
         viewModelScope.launch {
-            val profile = repository.me().getOrNull()
-            val friends = repository.friends().getOrElse { emptyList() }
-            val requests = repository.incomingRequests().getOrElse { emptyList() }
+            val profileResult = repository.me()
+            val friendsResult = repository.friends()
+            val requestsResult = repository.incomingRequests()
+
+            val error = profileResult.exceptionOrNull()
+                ?: friendsResult.exceptionOrNull()
+                ?: requestsResult.exceptionOrNull()
 
             _state.value = _state.value.copy(
                 isLoading = false,
-                profile = profile ?: _state.value.profile,
-                friends = friends,
-                incomingRequests = requests
+                profile = profileResult.getOrNull() ?: _state.value.profile,
+                friends = friendsResult.getOrElse { _state.value.friends },
+                incomingRequests =
+                    requestsResult.getOrElse { _state.value.incomingRequests },
+                message = error?.let(::errorMessage)
             )
         }
     }
