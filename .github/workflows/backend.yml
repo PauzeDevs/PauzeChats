@@ -3,7 +3,7 @@ name: Backend build
 on:
   push:
   pull_request:
-    branches: [main]
+    branches: [main, phase-1]
 
 permissions:
   contents: read
