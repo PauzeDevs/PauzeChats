@@ -27,10 +27,16 @@ data class MessageSummary(
     val sentAtEpochSeconds: Long
 )
 
+data class MessagingSessionConfig(
+    val accountId: String,
+    val accessToken: String,
+    val homeserverUrl: String
+)
+
 interface MessagingSession {
     val isInitialized: Boolean
 
-    suspend fun initialize(): Result<Unit>
+    suspend fun initialize(config: MessagingSessionConfig): Result<Unit>
 
     suspend fun signOut(): Result<Unit>
 }
