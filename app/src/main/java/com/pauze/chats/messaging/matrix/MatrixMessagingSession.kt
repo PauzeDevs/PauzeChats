@@ -65,7 +65,7 @@ class MatrixMessagingSession(
         }
     }
 
-    private fun loginWithPauzeSession(
+    private suspend fun loginWithPauzeSession(
         client: Client,
         config: MessagingSessionConfig,
         existingDeviceId: String?
