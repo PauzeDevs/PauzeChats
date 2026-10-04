@@ -45,6 +45,12 @@ The repository currently contains:
 
 This is deliberate. Security claims will only be made after the full protocol is implemented and tested.
 
+## Phase 2 messaging boundary
+
+The selected messaging foundation is the Matrix Rust SDK through maintained Android/Kotlin bindings. The SDK's encryption state machine is an implementation dependency, not a claim that PauzeChats is already E2EE-complete.
+
+Matrix identifiers, device identifiers, room identifiers, and event identifiers are internal implementation details and must not be exposed as public Discord-style IDs.
+
 ## Before public release
 
 Required gates:

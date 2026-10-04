@@ -3,7 +3,7 @@ name: Android build
 on:
   push:
   pull_request:
-    branches: [main, phase-1]
+    branches: [main, phase-1, phase-2]
 
 permissions:
   contents: read
