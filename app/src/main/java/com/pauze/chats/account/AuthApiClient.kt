@@ -118,10 +118,6 @@ class AuthApiClient(
     }
 
     private fun execute(request: Request): String {
-        if (baseUrl.isBlank()) {
-            throw AuthApiException("api_not_configured", 503)
-        }
-
         client.newCall(request).execute().use { response ->
             val body = response.body?.string().orEmpty()
 
@@ -139,8 +135,13 @@ class AuthApiClient(
         }
     }
 
-    private fun url(path: String): String =
-        baseUrl.trimEnd('/') + path
+    private fun url(path: String): String {
+        if (baseUrl.isBlank()) {
+            throw AuthApiException("api_not_configured", 503)
+        }
+
+        return baseUrl.trimEnd('/') + path
+    }
 
     data class AuthResult(
         val session: Session,
