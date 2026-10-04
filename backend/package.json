@@ -1,6 +1,6 @@
 {
   "name": "@pauzechats/api",
-  "version": "0.1.0-alpha01",
+  "version": "0.1.0-alpha02",
   "private": true,
   "type": "module",
   "engines": {
@@ -9,6 +9,11 @@
   "scripts": {
     "start": "node src/server.js",
     "test": "node --test",
-    "check": "node --check src/server.js"
+    "check": "node --check src/server.js && node --check src/auth.js && node --check src/validation.js"
+  },
+  "dependencies": {
+    "argon2": "0.45.1",
+    "jose": "6.2.12",
+    "pg": "8.23.1"
   }
 }

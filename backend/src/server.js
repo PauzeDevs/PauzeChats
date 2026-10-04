@@ -1,21 +1,120 @@
 import http from "node:http";
+import { createAuthService, AuthError } from "./auth.js";
+import { getPool } from "./db.js";
 
 const port = Number.parseInt(process.env.PORT ?? "8080", 10);
+const MAX_BODY_BYTES = 64 * 1024;
 
 if (!Number.isInteger(port) || port < 1 || port > 65535) {
     throw new Error("PORT must be a valid TCP port");
 }
 
-export function createServer() {
-    return http.createServer((request, response) => {
-        if (request.method === "GET" && request.url === "/healthz") {
-            response.writeHead(200, { "content-type": "application/json; charset=utf-8" });
-            response.end(JSON.stringify({ ok: true, service: "pauzechats-api" }));
-            return;
-        }
+function sendJson(response, status, body) {
+    response.writeHead(status, {
+        "content-type": "application/json; charset=utf-8",
+        "cache-control": "no-store"
+    });
+    response.end(JSON.stringify(body));
+}
 
-        response.writeHead(404, { "content-type": "application/json; charset=utf-8" });
-        response.end(JSON.stringify({ error: "not_found" }));
+async function readJsonBody(request) {
+    const chunks = [];
+    let size = 0;
+
+    for await (const chunk of request) {
+        size += chunk.length;
+        if (size > MAX_BODY_BYTES) {
+            throw new AuthError("request_too_large", 413);
+        }
+        chunks.push(chunk);
+    }
+
+    if (chunks.length === 0) return {};
+
+    try {
+        return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+    } catch {
+        throw new AuthError("invalid_json", 400);
+    }
+}
+
+function bearerToken(request) {
+    const header = request.headers.authorization;
+    if (typeof header !== "string") return null;
+
+    const match = /^Bearer\s+(.+)$/i.exec(header);
+    return match?.[1] ?? null;
+}
+
+export function createServer({ pool = getPool(), accessTokenSecret = process.env.ACCESS_TOKEN_SECRET } = {}) {
+    let authService = null;
+    if (pool && accessTokenSecret) {
+        authService = createAuthService({ pool, accessTokenSecret });
+    }
+
+    return http.createServer(async (request, response) => {
+        try {
+            if (request.method === "GET" && request.url === "/healthz") {
+                sendJson(response, 200, { ok: true, service: "pauzechats-api" });
+                return;
+            }
+
+            if (!authService) {
+                sendJson(response, 503, { error: "service_not_configured" });
+                return;
+            }
+
+            if (request.method === "POST" && request.url === "/v1/auth/register") {
+                const body = await readJsonBody(request);
+                const result = await authService.register(body);
+                sendJson(response, 201, result);
+                return;
+            }
+
+            if (request.method === "POST" && request.url === "/v1/auth/sign-in") {
+                const body = await readJsonBody(request);
+                const result = await authService.signIn(body);
+                sendJson(response, 200, result);
+                return;
+            }
+
+            if (request.method === "POST" && request.url === "/v1/auth/refresh") {
+                const body = await readJsonBody(request);
+                const result = await authService.refresh(body?.refreshToken);
+                sendJson(response, 200, result);
+                return;
+            }
+
+            const accessToken = bearerToken(request);
+            if (!accessToken) {
+                sendJson(response, 401, { error: "missing_access_token" });
+                return;
+            }
+
+            const auth = await authService.authenticate(accessToken);
+
+            if (request.method === "POST" && request.url === "/v1/auth/sign-out") {
+                await authService.signOut(auth.sessionId);
+                sendJson(response, 200, { ok: true });
+                return;
+            }
+
+            if (request.method === "GET" && request.url === "/v1/me") {
+                const profile = await authService.getProfile(auth.userId);
+                sendJson(response, 200, profile);
+                return;
+            }
+
+            sendJson(response, 404, { error: "not_found" });
+        } catch (error) {
+            if (error instanceof AuthError) {
+                sendJson(response, error.status, { error: error.code });
+                return;
+            }
+
+            console.error(error);
+            sendJson(response, 500, { error: "internal_server_error" });
+        }
     });
 }
 

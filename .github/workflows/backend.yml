@@ -21,10 +21,12 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/package.json
 
       - name: Install backend dependencies
         working-directory: backend
-        run: npm install --ignore-scripts
+        run: npm install
 
       - name: Syntax check
         working-directory: backend
