@@ -1,0 +1,29 @@
+# Android / Gradle
+.gradle/
+build/
+**/build/
+local.properties
+.idea/
+*.iml
+
+# Android Studio
+captures/
+
+# Secrets
+.env
+.env.*
+!.env.example
+*.keystore
+*.jks
+
+# OS
+.DS_Store
+
+# Generated
+*.log
+
+# Kotlin
+.kotlin/
+
+# Temporary
+tmp/
