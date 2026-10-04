@@ -3,6 +3,8 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+val apiBaseUrl = providers.gradleProperty("pauzeApiBaseUrl").orNull ?: ""
+
 android {
     namespace = "com.pauze.chats"
     compileSdk {
@@ -13,7 +15,7 @@ android {
 
     defaultConfig {
         applicationId = "com.pauze.chats"
-        buildConfigField("String", "PAUZE_API_BASE_URL", "\"${providers.gradleProperty(\"pauzeApiBaseUrl\").orNull ?: \"\"}\"")
+        buildConfigField("String", "PAUZE_API_BASE_URL", "\"$apiBaseUrl\"")
         minSdk = 26
         targetSdk = 37
         versionCode = 1
