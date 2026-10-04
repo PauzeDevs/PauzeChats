@@ -54,7 +54,10 @@ data class FriendRequest(
 interface AuthRepository {
     suspend fun signIn(credentials: AccountCredentials): Result<Session>
 
-    suspend fun signUp(request: RegistrationRequest): Result<Session>
+    suspend fun signUp(
+        request: RegistrationRequest,
+        inviteCode: String
+    ): Result<Session>
 
     suspend fun signOut(): Result<Unit>
 

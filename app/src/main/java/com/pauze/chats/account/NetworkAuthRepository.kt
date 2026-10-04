@@ -24,13 +24,6 @@ class NetworkAuthRepository(
     }
 
     override suspend fun signUp(
-        request: RegistrationRequest
-    ): Result<Session> =
-        Result.failure(
-            IllegalArgumentException("Invite code is required")
-        )
-
-    suspend fun signUp(
         request: RegistrationRequest,
         inviteCode: String
     ): Result<Session> = withContext(Dispatchers.IO) {
@@ -44,6 +37,7 @@ class NetworkAuthRepository(
     override suspend fun signOut(): Result<Unit> = withContext(Dispatchers.IO) {
         runCatching {
             inMemorySession?.accessToken?.let { api.signOut(it) }
+            Unit
         }.also {
             inMemorySession = null
             sessionStore.clear()
