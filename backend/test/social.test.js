@@ -27,7 +27,6 @@ function createPool(responses) {
 
 test("username lookup normalizes the username", async () => {
     const pool = createPool([
-        { rows: [] },
         {
             rows: [{
                 user_id: "u-1",
@@ -59,6 +58,7 @@ test("profile updates reject invalid data", async () => {
 
 test("friend requests reject self-adds", async () => {
     const pool = createPool([
+        { rows: [] },
         {
             rows: [{
                 user_id: "u-1",
