@@ -1,8 +1,13 @@
+/*
+ * Copyright © 2026 Aarav Singh (Pauze). All rights reserved.
+ */
+
 package com.pauze.chats
 
 import android.app.Application
 import com.pauze.chats.account.NetworkAuthRepository
 import com.pauze.chats.account.NetworkSocialRepository
+import com.pauze.chats.messaging.matrix.MatrixSdkPlatform
 
 class PauzeChatsApplication : Application() {
     lateinit var authRepository: NetworkAuthRepository
@@ -13,6 +18,8 @@ class PauzeChatsApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+
+        MatrixSdkPlatform.initialize()
 
         authRepository = NetworkAuthRepository(this)
         socialRepository = NetworkSocialRepository(authRepository)
