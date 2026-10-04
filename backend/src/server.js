@@ -1,5 +1,6 @@
 import http from "node:http";
 import { createAuthService, AuthError } from "./auth.js";
+import { createSocialService, SocialError } from "./social.js";
 import { getPool } from "./db.js";
 
 const port = Number.parseInt(process.env.PORT ?? "8080", 10);
@@ -48,8 +49,10 @@ function bearerToken(request) {
 
 export function createServer({ pool = getPool(), accessTokenSecret = process.env.ACCESS_TOKEN_SECRET } = {}) {
     let authService = null;
+    let socialService = null;
     if (pool && accessTokenSecret) {
         authService = createAuthService({ pool, accessTokenSecret });
+        socialService = createSocialService({ pool });
     }
 
     return http.createServer(async (request, response) => {
@@ -64,21 +67,24 @@ export function createServer({ pool = getPool(), accessTokenSecret = process.env
                 return;
             }
 
-            if (request.method === "POST" && request.url === "/v1/auth/register") {
+            const requestUrl = new URL(request.url ?? "/", `http://${request.headers.host ?? "localhost"}`);
+            const path = requestUrl.pathname;
+
+            if (request.method === "POST" && path === "/v1/auth/register") {
                 const body = await readJsonBody(request);
                 const result = await authService.register(body);
                 sendJson(response, 201, result);
                 return;
             }
 
-            if (request.method === "POST" && request.url === "/v1/auth/sign-in") {
+            if (request.method === "POST" && path === "/v1/auth/sign-in") {
                 const body = await readJsonBody(request);
                 const result = await authService.signIn(body);
                 sendJson(response, 200, result);
                 return;
             }
 
-            if (request.method === "POST" && request.url === "/v1/auth/refresh") {
+            if (request.method === "POST" && path === "/v1/auth/refresh") {
                 const body = await readJsonBody(request);
                 const result = await authService.refresh(body?.refreshToken);
                 sendJson(response, 200, result);
@@ -93,21 +99,83 @@ export function createServer({ pool = getPool(), accessTokenSecret = process.env
 
             const auth = await authService.authenticate(accessToken);
 
-            if (request.method === "POST" && request.url === "/v1/auth/sign-out") {
+            if (request.method === "POST" && path === "/v1/auth/sign-out") {
                 await authService.signOut(auth.sessionId);
                 sendJson(response, 200, { ok: true });
                 return;
             }
 
-            if (request.method === "GET" && request.url === "/v1/me") {
+            if (request.method === "GET" && path === "/v1/me") {
                 const profile = await authService.getProfile(auth.userId);
                 sendJson(response, 200, profile);
                 return;
             }
 
+            if (request.method === "PATCH" && path === "/v1/me/profile") {
+                const body = await readJsonBody(request);
+                const profile = await socialService.updateProfile(auth.userId, body);
+                sendJson(response, 200, profile);
+                return;
+            }
+
+            if (request.method === "GET" && path === "/v1/users/lookup") {
+                const username = requestUrl.searchParams.get("username") ?? "";
+                const profile = await socialService.lookupUserByUsername(username);
+                sendJson(response, 200, profile);
+                return;
+            }
+
+            if (request.method === "POST" && path === "/v1/friends/requests") {
+                const body = await readJsonBody(request);
+                const result = await socialService.createFriendRequest(
+                    auth.userId,
+                    body?.username
+                );
+                sendJson(response, 201, result);
+                return;
+            }
+
+            if (request.method === "GET" && path === "/v1/friends/requests/incoming") {
+                const result = await socialService.listFriendRequests(auth.userId, "incoming");
+                sendJson(response, 200, result);
+                return;
+            }
+
+            if (request.method === "GET" && path === "/v1/friends/requests/outgoing") {
+                const result = await socialService.listFriendRequests(auth.userId, "outgoing");
+                sendJson(response, 200, result);
+                return;
+            }
+
+            const friendRequestMatch =
+                /^\/v1\/friends\/requests\/([^/]+)\/(accept|decline|cancel)$/.exec(path);
+
+            if (request.method === "POST" && friendRequestMatch) {
+                const action = {
+                    accept: "ACCEPTED",
+                    decline: "DECLINED",
+                    cancel: "CANCELLED"
+                }[friendRequestMatch[2]];
+
+                const result = await socialService.respondToFriendRequest(
+                    auth.userId,
+                    friendRequestMatch[1],
+                    action
+                );
+
+                sendJson(response, 200, result);
+                return;
+            }
+
+            if (request.method === "GET" && path === "/v1/friends") {
+                const result = await socialService.listFriends(auth.userId);
+                sendJson(response, 200, result);
+                return;
+            }
+
             sendJson(response, 404, { error: "not_found" });
         } catch (error) {
-            if (error instanceof AuthError) {
+            if (error instanceof AuthError || error instanceof SocialError) {
                 sendJson(response, error.status, { error: error.code });
                 return;
             }
