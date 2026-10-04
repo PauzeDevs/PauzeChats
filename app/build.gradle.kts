@@ -6,7 +6,11 @@ plugins {
 
 android {
     namespace = "com.pauze.chats"
-    compileSdk = 37
+    compileSdk {
+        version = release(37) {
+            minorApiLevel = 0
+        }
+    }
 
     defaultConfig {
         applicationId = "com.pauze.chats"
