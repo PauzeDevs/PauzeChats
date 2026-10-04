@@ -96,9 +96,9 @@ export function createAuthService({ pool, accessTokenSecret }) {
             const inviteResult = await client.query(
                 `select id, max_uses, use_count, expires_at, revoked_at
                  from invites
-                 where code_hash = digest($1, 'sha256')
+                 where code_hash = $1
                  for update`,
-                [inviteCode]
+                [hashOpaqueToken(inviteCode)]
             );
 
             const invite = inviteResult.rows[0];
@@ -191,19 +191,25 @@ export function createAuthService({ pool, accessTokenSecret }) {
             }
 
             await client.query("begin");
-            const session = await createSession(client, user.id);
-            await client.query("commit");
 
-            return {
-                session,
-                profile: {
-                    userId: user.id,
-                    username: user.username,
-                    displayName: user.display_name,
-                    bio: user.bio,
-                    avatarMimeType: user.avatar_mime_type
-                }
-            };
+            try {
+                const session = await createSession(client, user.id);
+                await client.query("commit");
+
+                return {
+                    session,
+                    profile: {
+                        userId: user.id,
+                        username: user.username,
+                        displayName: user.display_name,
+                        bio: user.bio,
+                        avatarMimeType: user.avatar_mime_type
+                    }
+                };
+            } catch (error) {
+                await client.query("rollback").catch(() => {});
+                throw error;
+            }
         } finally {
             client.release();
         }
@@ -220,7 +226,7 @@ export function createAuthService({ pool, accessTokenSecret }) {
             await client.query("begin");
 
             const result = await client.query(
-                `select s.id, s.user_id, s.expires_at,
+                `select s.id, s.user_id, s.expires_at, s.revoked_at,
                         u.disabled_at,
                         p.username, p.display_name, p.bio, p.avatar_mime_type
                  from sessions s
