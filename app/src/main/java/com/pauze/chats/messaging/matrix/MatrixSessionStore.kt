@@ -83,6 +83,7 @@ class MatrixSessionStore(context: Context) {
                 ) {
                     SlidingSyncVersion.NATIVE.name -> SlidingSyncVersion.NATIVE
                     SlidingSyncVersion.NONE.name -> SlidingSyncVersion.NONE
+                    else -> error("Unsupported Matrix sliding sync version")
                 }
             )
         }.getOrNull()
