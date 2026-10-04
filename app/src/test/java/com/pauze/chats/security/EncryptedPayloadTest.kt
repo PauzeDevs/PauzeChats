@@ -1,6 +1,6 @@
 package com.pauze.chats.security
 
-import kotlin.test.Test
+import org.junit.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
