@@ -156,11 +156,19 @@ class AuthViewModel(
                     "That email or username is already in use."
                 "invalid_registration" ->
                     "Check your registration details and try again."
+                "rate_limited" ->
+                    formatRateLimitMessage(error)
                 else ->
                     "Authentication failed. Try again."
             }
             else -> "Couldn't connect to PauzeChats. Check your internet connection."
         }
+
+    private fun formatRateLimitMessage(error: AuthApiException): String =
+        error.retryAfterSeconds?.let { seconds ->
+            val minutes = (seconds + 59L) / 60L
+            "Too many attempts. Try again in about $minutes minute(s)."
+        } ?: "Too many attempts. Try again later."
 
     class Factory(
         private val repository: AuthRepository
