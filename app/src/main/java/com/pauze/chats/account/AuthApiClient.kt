@@ -10,7 +10,8 @@ import java.io.IOException
 
 class AuthApiException(
     val errorCode: String,
-    val httpStatus: Int
+    val httpStatus: Int,
+    val retryAfterSeconds: Long? = null
 ) : IOException(errorCode)
 
 class AuthApiClient(
@@ -128,7 +129,16 @@ class AuthApiClient(
                     "request_failed"
                 }
 
-                throw AuthApiException(errorCode, response.code)
+                val retryAfterSeconds =
+                    response.header("Retry-After")
+                        ?.toLongOrNull()
+                        ?.takeIf { it > 0 }
+
+                throw AuthApiException(
+                    errorCode = errorCode,
+                    httpStatus = response.code,
+                    retryAfterSeconds = retryAfterSeconds
+                )
             }
 
             return body
