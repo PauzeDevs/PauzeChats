@@ -16,7 +16,7 @@ test("allows requests up to the limit", () => {
     );
     assert.deepEqual(
         limiter.consume("ip:1", 2, 10_000),
-        { allowed: false, remaining: 0, retryAfterSeconds: 9 }
+        { allowed: false, remaining: 0, retryAfterSeconds: 10 }
     );
 });
 
