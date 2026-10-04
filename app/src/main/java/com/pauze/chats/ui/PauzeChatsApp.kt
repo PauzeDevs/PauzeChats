@@ -31,7 +31,9 @@ import com.pauze.chats.ui.social.SocialViewModel
 import com.pauze.chats.ui.theme.PauzeChatsTheme
 
 @Composable
-fun PauzeChatsApp() {
+fun PauzeChatsApp(
+    initialInviteCode: String? = null
+) {
     val application =
         LocalContext.current.applicationContext as PauzeChatsApplication
 
@@ -44,6 +46,7 @@ fun PauzeChatsApp() {
         if (!authState.isAuthenticated) {
             AuthScreen(
                 state = authState,
+                initialInviteCode = initialInviteCode,
                 onModeChange = authViewModel::setMode,
                 onSignIn = authViewModel::signIn,
                 onSignUp = authViewModel::signUp

@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.mutableStateOf
@@ -34,6 +35,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun AuthScreen(
     state: AuthUiState,
+    initialInviteCode: String? = null,
     onModeChange: (AuthMode) -> Unit,
     onSignIn: (email: String, password: String) -> Unit,
     onSignUp: (
@@ -50,7 +52,15 @@ fun AuthScreen(
     var username by rememberSaveable { mutableStateOf("") }
     var displayName by rememberSaveable { mutableStateOf("") }
     var bio by rememberSaveable { mutableStateOf("") }
-    var inviteCode by rememberSaveable { mutableStateOf("") }
+    var inviteCode by rememberSaveable {
+        mutableStateOf(initialInviteCode.orEmpty())
+    }
+
+    LaunchedEffect(initialInviteCode) {
+        if (!initialInviteCode.isNullOrBlank()) {
+            onModeChange(AuthMode.SIGN_UP)
+        }
+    }
 
     Column(
         modifier = Modifier
