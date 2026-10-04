@@ -1,3 +1,7 @@
+/*
+ * Copyright © 2026 Aarav Singh (Pauze). All rights reserved.
+ */
+
 package com.pauze.chats
 
 import android.app.Application
