@@ -100,20 +100,9 @@ class AuthViewModel(
         viewModelScope.launch {
             operation().fold(
                 onSuccess = {
-                    val profile = runCatching {
-                        repository.currentSession()?.let { current ->
-                            if (current.userId == it.userId) {
-                                null
-                            } else {
-                                null
-                            }
-                        }
-                    }.getOrNull()
-
                     _state.value = _state.value.copy(
                         isBusy = false,
                         isAuthenticated = true,
-                        profile = profile,
                         errorMessage = null
                     )
                 },
