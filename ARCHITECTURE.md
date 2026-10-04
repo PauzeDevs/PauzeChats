@@ -83,6 +83,14 @@ Activity visibility will be controlled by the user and will be treated as option
 
 The UI should not claim E2EE until the complete protocol, key lifecycle, device verification, local storage, and server contract are implemented and tested.
 
+## Messaging technology decision
+
+Phase 2 uses the Matrix Rust SDK through maintained Kotlin/Android bindings. PauzeChats will isolate Matrix behind application-owned messaging interfaces so Matrix identifiers and SDK types do not become public product concepts.
+
+The initial deployment target is a private, invite-only Synapse homeserver. Federation will remain disabled or explicitly constrained unless a future product requirement justifies it.
+
+See docs/decisions/0002-messaging-stack.md for the full decision.
+
 ## Technology direction
 
 Backend direction:
