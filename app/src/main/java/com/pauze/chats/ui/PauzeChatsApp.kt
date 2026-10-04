@@ -4,12 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -52,14 +48,14 @@ fun PauzeChatsApp() {
                     NavigationBarItem(
                         selected = selectedTab == 0,
                         onClick = { selectedTab = 0 },
-                        icon = { Text("D") },
-                        label = { Text("DMs") }
+                        icon = { Text("C") },
+                        label = { Text("Chats") }
                     )
                     NavigationBarItem(
                         selected = selectedTab == 1,
                         onClick = { selectedTab = 1 },
-                        icon = { Text("C") },
-                        label = { Text("Communities") }
+                        icon = { Text("F") },
+                        label = { Text("Friends") }
                     )
                     NavigationBarItem(
                         selected = selectedTab == 2,
@@ -71,8 +67,8 @@ fun PauzeChatsApp() {
             }
         ) { paddingValues ->
             when (selectedTab) {
-                0 -> DmFoundationScreen(Modifier.padding(paddingValues))
-                1 -> CommunitiesFoundationScreen(Modifier.padding(paddingValues))
+                0 -> ChatsFoundationScreen(Modifier.padding(paddingValues))
+                1 -> FriendsFoundationScreen(Modifier.padding(paddingValues))
                 else -> SettingsFoundationScreen(Modifier.padding(paddingValues))
             }
         }
@@ -80,7 +76,7 @@ fun PauzeChatsApp() {
 }
 
 @Composable
-private fun DmFoundationScreen(modifier: Modifier = Modifier) {
+private fun ChatsFoundationScreen(modifier: Modifier = Modifier) {
     Surface(modifier = modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
@@ -89,48 +85,38 @@ private fun DmFoundationScreen(modifier: Modifier = Modifier) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(Modifier.height(12.dp))
             Text(
-                "End-to-end encrypted DMs",
+                "Private chats",
                 style = MaterialTheme.typography.headlineSmall
             )
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.padding(4.dp))
             Text(
-                "The first messaging vertical slice is intentionally gated until the real key lifecycle and session protocol are wired.",
+                "Personal and group conversations will live here once account and messaging foundations are ready.",
                 style = MaterialTheme.typography.bodyMedium
             )
-            Spacer(Modifier.height(20.dp))
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp)) {
-                    Text("Security gate", style = MaterialTheme.typography.titleMedium)
-                    Spacer(Modifier.height(6.dp))
-                    Text("No plaintext leaves the device. No fake encryption in the alpha.")
-                }
-            }
         }
     }
 }
 
 @Composable
-private fun CommunitiesFoundationScreen(modifier: Modifier = Modifier) {
+private fun FriendsFoundationScreen(modifier: Modifier = Modifier) {
     Surface(modifier = modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(20.dp),
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Private communities", style = MaterialTheme.typography.headlineSmall)
-            Spacer(Modifier.height(8.dp))
-            Text("Discord-style servers, channels, roles and invite links are planned here.")
-            Spacer(Modifier.height(20.dp))
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp)) {
-                    Text("Access model", style = MaterialTheme.typography.titleMedium)
-                    Spacer(Modifier.height(6.dp))
-                    Text("Private by default. No public server discovery.")
-                }
-            }
+            Text(
+                "Friends",
+                style = MaterialTheme.typography.headlineSmall
+            )
+            Spacer(Modifier.padding(4.dp))
+            Text(
+                "Add people by their unique username.",
+                style = MaterialTheme.typography.bodyMedium
+            )
         }
     }
 }
@@ -142,11 +128,18 @@ private fun SettingsFoundationScreen(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(20.dp),
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Privacy controls", style = MaterialTheme.typography.headlineSmall)
-            Spacer(Modifier.height(10.dp))
-            Text("Future controls: device verification, sessions, blocked users, notifications and privacy settings.")
+            Text(
+                "Settings",
+                style = MaterialTheme.typography.headlineSmall
+            )
+            Spacer(Modifier.padding(4.dp))
+            Text(
+                "Account, privacy, notifications, sessions, and presence controls will live here.",
+                style = MaterialTheme.typography.bodyMedium
+            )
         }
     }
 }

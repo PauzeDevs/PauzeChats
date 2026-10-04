@@ -2,76 +2,107 @@
 
 ## Product model
 
-PauzeChats has two different security domains.
+PauzeChats is a private social messenger for people who know each other.
 
-### DMs
+### 1-to-1 chats
 
-DMs are E2EE.
+Direct conversations are end-to-end encrypted.
 
 Device A -> encrypt/session state -> ciphertext -> relay/realtime -> ciphertext -> decrypt/session state -> Device B
 
-The backend is a relay and authorization layer. It is not a DM plaintext processor.
+The backend is an authorization, delivery, and encrypted-data transport layer. It must not receive 1-to-1 plaintext message bodies.
 
-### Communities
+### Group chats
 
-Communities behave more like private Discord servers:
-- servers are invite-only
-- text channels
-- voice channels later
-- roles and permissions
-- nicknames
-- reactions
-- threads later
-- custom server assets later
+Group conversations are a first-class messaging feature. They are not Discord-style servers and do not contain channels, roles, or community infrastructure.
 
-Community messages are a separate security policy from E2EE DMs because server-side features such as permissions and moderation need server-visible metadata/content unless a different private-community design is adopted.
+Group requirements:
+- private membership
+- group name and profile image
+- member management
+- encrypted message delivery
+- replies, reactions, edits, and deletes
+
+The exact production group E2EE protocol will be selected and implemented before the app advertises group E2EE.
 
 ## Identity
 
-PauzeChats should minimize public identifiers.
+The public identity model is intentionally small:
+- email address for account authentication
+- unique username for finding and adding friends
+- optional display name
+- optional bio
+- profile picture, including GIF/WebP/PNG support
+- internal immutable user identifier that is never exposed as a Discord-style public ID
 
-The product should use an internal immutable user/device identifier and an app-level username for addressing people. Phone numbers are not part of the public identity model.
-
-There is no public user directory.
+There is no public user directory or random-user discovery.
 
 ## Authentication
 
-Initial onboarding is invite-gated:
+Phase 1 account flow:
 
-Invite link -> server validates invite -> account/device registration -> device key registration -> session established
+Email + password -> account session -> choose/check unique username -> profile setup
 
-Invite codes must be high entropy, revocable, rate-limited, and stored server-side as hashes rather than reusable plaintext secrets where practical.
+Friend discovery is username-based and should require an explicit friend request/acceptance flow.
+
+Password reset, session revocation, and device/session management are security requirements, not optional polish.
 
 ## Backend boundary
 
 The backend is responsible for:
-- invite validation
-- authentication and session lifecycle
-- device registration
-- authorization
-- ciphertext relay/storage for DMs
-- community membership
-- channel and role permissions
+- account authentication and session lifecycle
+- unique username reservation/search
+- profile metadata
+- friend requests and relationships
+- chat membership and authorization
+- encrypted message ciphertext relay/storage
 - realtime delivery
 - push-token registration
+- encrypted media metadata/storage
 - rate limiting and abuse controls
 
-It must not contain a code path that accepts DM plaintext from a client.
+The backend must not expose a code path that accepts 1-to-1 DM plaintext.
+
+## Presence and activity
+
+PauzeChats will implement its own presence/activity system rather than copying Discord's public identity model.
+
+Planned integrations:
+- Amazon Music listening activity
+- games / game activity
+- custom status
+
+Activity visibility will be controlled by the user and will be treated as optional profile/presence data.
+
+## Android foundation
+
+- Kotlin
+- Jetpack Compose
+- Android Keystore for device-local key material
+- encrypted local storage for sensitive app state
+
+The UI should not claim E2EE until the complete protocol, key lifecycle, device verification, local storage, and server contract are implemented and tested.
 
 ## Technology direction
 
-Android:
-- Kotlin
-- Jetpack Compose
-- Android Keystore
-
 Backend direction:
-- API + WebSocket/realtime transport
+- HTTPS API
+- realtime transport
 - PostgreSQL-compatible persistence
 - object storage for encrypted media
 
-The final backend provider is intentionally not hard-coded into this first commit. We can choose a managed service for the friends-only alpha and keep the server contract portable.
+The exact provider can be chosen after the account and messaging contracts are stable.
+
+## Explicit non-goals
+
+PauzeChats does not contain:
+- Discord-style servers
+- text or voice channels
+- roles
+- server permissions
+- server discovery
+- community directories
 
 ## Versioning
 
-The project is currently pre-alpha. Breaking changes are expected until the first end-to-end vertical slice is complete.
+The project is pre-alpha. Breaking changes are expected while Phase 1 is being built.
