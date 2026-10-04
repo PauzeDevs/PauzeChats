@@ -13,6 +13,7 @@ android {
 
     defaultConfig {
         applicationId = "com.pauze.chats"
+        buildConfigField("String", "PAUZE_API_BASE_URL", "\"${providers.gradleProperty(\"pauzeApiBaseUrl\").orNull ?: \"\"}\"")
         minSdk = 26
         targetSdk = 37
         versionCode = 1
@@ -21,6 +22,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     packaging {
@@ -54,6 +56,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.11.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.11.0")
+    implementation("com.squareup.okhttp3:okhttp:5.5.0")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
 
