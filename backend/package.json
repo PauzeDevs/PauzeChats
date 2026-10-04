@@ -1,0 +1,14 @@
+{
+  "name": "@pauzechats/api",
+  "version": "0.1.0-alpha01",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test",
+    "check": "node --check src/server.js"
+  }
+}

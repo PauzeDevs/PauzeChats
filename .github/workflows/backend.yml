@@ -1,0 +1,35 @@
+name: Backend build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Node 24
+        uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm install --ignore-scripts
+
+      - name: Syntax check
+        working-directory: backend
+        run: npm run check
+
+      - name: Unit tests
+        working-directory: backend
+        run: npm test
