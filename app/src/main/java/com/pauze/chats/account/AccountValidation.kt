@@ -9,9 +9,9 @@ private const val MAX_BIO_LENGTH = 200
 private const val MAX_EMAIL_LENGTH = 254
 
 private val emailPattern =
-    Regex("^[A-Za-z0-9.!#$%&'*+/=?^_\`{|}~-]+@[A-Za-z0-9-]+(?:\\.[A-Za-z0-9-]+)+$")
+    Regex("^[A-Za-z0-9.!#\$%&'*+/=?^_{|}~-]+@[A-Za-z0-9-]+(?:\\\\.[A-Za-z0-9-]+)+\$")
 
-private val usernamePattern = Regex("^[a-z0-9_]+$")
+private val usernamePattern = Regex("^[a-z0-9_]+\$")
 
 object AccountValidation {
     fun normalizeEmail(email: String): String? {
