@@ -15,19 +15,45 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.pauze.chats.ui.theme.PauzeChatsTheme
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.pauze.chats.PauzeChatsApplication
+import com.pauze.chats.ui.auth.AuthScreen
+import com.pauze.chats.ui.auth.AuthViewModel
+
+@Composable
+fun PauzeChatsApp() {
+    val application =
+        LocalContext.current.applicationContext as PauzeChatsApplication
+
+    val authViewModel: AuthViewModel = viewModel(
+        factory = AuthViewModel.Factory(application.authRepository)
+    )
+    val authState by authViewModel.state.collectAsStateWithLifecycle()
+
+    if (!authState.isAuthenticated) {
+        AuthScreen(
+            state = authState,
+            onModeChange = authViewModel::setMode,
+            onSignIn = authViewModel::signIn,
+            onSignUp = authViewModel::signUp
+        )
+    } else {
+        AuthenticatedApp()
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PauzeChatsApp() {
-    PauzeChatsTheme {
-        var selectedTab by remember { mutableIntStateOf(0) }
+private fun AuthenticatedApp() {
+    MaterialTheme {
+        var selectedTab by androidx.compose.runtime.remember {
+            androidx.compose.runtime.mutableIntStateOf(0)
+        }
 
         Scaffold(
             topBar = {
@@ -91,7 +117,7 @@ private fun ChatsFoundationScreen(modifier: Modifier = Modifier) {
             )
             Spacer(Modifier.padding(4.dp))
             Text(
-                "Personal and group conversations will live here once account and messaging foundations are ready.",
+                "Personal and group conversations will live here once messaging foundations are ready.",
                 style = MaterialTheme.typography.bodyMedium
             )
         }
