@@ -30,6 +30,8 @@ data class UserProfile(
 data class Session(
     val userId: UserId,
     val sessionId: String,
+    val accessToken: String,
+    val refreshToken: String,
     val expiresAtEpochSeconds: Long
 )
 
