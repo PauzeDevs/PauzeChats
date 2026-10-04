@@ -2,6 +2,7 @@ package com.pauze.chats.messaging.matrix
 
 import android.content.Context
 import java.io.File
+import java.security.MessageDigest
 import org.matrix.rustcomponents.sdk.Client
 import org.matrix.rustcomponents.sdk.ClientBuilder
 import org.matrix.rustcomponents.sdk.SlidingSyncVersionBuilder
@@ -24,17 +25,15 @@ class MatrixSdkClientFactory(
 
         val accountRoot = File(
             appContext.filesDir,
-            "matrix/$accountId"
-        ).apply {
-            mkdirs()
-        }
+            "matrix/${accountKey(accountId)}"
+        )
+        requireDirectory(accountRoot)
 
-        val dataPath = File(accountRoot, "data").apply {
-            mkdirs()
-        }
-        val cachePath = File(accountRoot, "cache").apply {
-            mkdirs()
-        }
+        val dataPath = File(accountRoot, "data")
+        requireDirectory(dataPath)
+
+        val cachePath = File(accountRoot, "cache")
+        requireDirectory(cachePath)
 
         ClientBuilder()
             .sessionPaths(
@@ -44,5 +43,20 @@ class MatrixSdkClientFactory(
             .homeserverUrl(homeserverUrl)
             .slidingSyncVersionBuilder(SlidingSyncVersionBuilder.NATIVE)
             .build()
+    }
+
+    private fun accountKey(accountId: String): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+            .digest(accountId.toByteArray(Charsets.UTF_8))
+
+        return digest.joinToString(separator = "") { byte ->
+            "%02x".format(byte)
+        }
+    }
+
+    private fun requireDirectory(directory: File) {
+        check(directory.isDirectory || directory.mkdirs()) {
+            "Unable to create Matrix session directory: ${directory.absolutePath}"
+        }
     }
 }
