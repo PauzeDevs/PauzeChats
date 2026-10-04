@@ -77,6 +77,33 @@ class AuthViewModel(
         _state.value = _state.value.copy(errorMessage = null)
     }
 
+    fun signOut() {
+        if (_state.value.isBusy) return
+
+        _state.value = _state.value.copy(
+            isBusy = true,
+            errorMessage = null
+        )
+
+        viewModelScope.launch {
+            repository.signOut().fold(
+                onSuccess = {
+                    _state.value = AuthUiState(
+                        mode = AuthMode.SIGN_IN,
+                        isBusy = false,
+                        isAuthenticated = false
+                    )
+                },
+                onFailure = { error ->
+                    _state.value = _state.value.copy(
+                        isBusy = false,
+                        errorMessage = errorMessage(error)
+                    )
+                }
+            )
+        }
+    }
+
     private fun restoreSession() {
         viewModelScope.launch {
             val session = repository.currentSession()
