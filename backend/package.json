@@ -9,6 +9,8 @@
   "scripts": {
     "start": "node src/server.js",
     "test": "node --test",
+    "create-invite": "node scripts/create-invite.js",
+    "revoke-invite": "node scripts/revoke-invite.js",
     "check": "node --check src/server.js && node --check src/auth.js && node --check src/validation.js"
   },
   "dependencies": {

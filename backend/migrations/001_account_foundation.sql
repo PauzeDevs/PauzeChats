@@ -69,3 +69,7 @@ create unique index if not exists friend_requests_pending_pair_unique
         greatest(from_user_id, to_user_id)
     )
     where status = 'PENDING';
+
+create index if not exists invites_active_idx
+    on invites (expires_at, created_at desc)
+    where revoked_at is null;
