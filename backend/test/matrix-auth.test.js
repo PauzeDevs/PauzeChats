@@ -37,7 +37,7 @@ test("matrix token is short lived and audience bound", async () => {
     assert.equal(verified.payload.sub, "aarav");
     assert.equal(verified.payload.display_name, "Aarav Singh");
     assert.equal(verified.payload.iss, issuer);
-    assert.deepEqual(verified.payload.aud, [audience]);
+    assert.equal(verified.payload.aud, audience);
     assert.ok(
         typeof verified.payload.exp === "number" &&
         typeof verified.payload.iat === "number"
