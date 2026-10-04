@@ -2,9 +2,15 @@ import http from "node:http";
 import { createAuthService, AuthError } from "./auth.js";
 import { createSocialService, SocialError } from "./social.js";
 import { getPool } from "./db.js";
+import { RateLimiter } from "./rate-limit.js";
 
 const port = Number.parseInt(process.env.PORT ?? "8080", 10);
 const MAX_BODY_BYTES = 64 * 1024;
+const AUTH_RATE_WINDOW_MS = 15 * 60 * 1000;
+const REGISTER_RATE_LIMIT = 5;
+const SIGN_IN_RATE_LIMIT = 10;
+const REFRESH_RATE_LIMIT = 30;
+const trustProxy = process.env.TRUST_PROXY === "true";
 
 if (!Number.isInteger(port) || port < 1 || port > 65535) {
     throw new Error("PORT must be a valid TCP port");
@@ -39,6 +45,21 @@ async function readJsonBody(request) {
     }
 }
 
+function clientAddress(request) {
+    if (trustProxy) {
+        const forwarded = request.headers["x-forwarded-for"];
+        if (typeof forwarded === "string" && forwarded.trim()) {
+            return forwarded.split(",")[0].trim();
+        }
+    }
+
+    return request.socket.remoteAddress ?? "unknown";
+}
+
+function rateKey(prefix, value) {
+    return `${prefix}:${value}`;
+}
+
 function bearerToken(request) {
     const header = request.headers.authorization;
     if (typeof header !== "string") return null;
@@ -47,7 +68,11 @@ function bearerToken(request) {
     return match?.[1] ?? null;
 }
 
-export function createServer({ pool = getPool(), accessTokenSecret = process.env.ACCESS_TOKEN_SECRET } = {}) {
+export function createServer({
+    pool = getPool(),
+    accessTokenSecret = process.env.ACCESS_TOKEN_SECRET,
+    authRateLimiter = new RateLimiter()
+} = {}) {
     let authService = null;
     let socialService = null;
     if (pool && accessTokenSecret) {
@@ -71,6 +96,18 @@ export function createServer({ pool = getPool(), accessTokenSecret = process.env
             const path = requestUrl.pathname;
 
             if (request.method === "POST" && path === "/v1/auth/register") {
+                const limit = authRateLimiter.consume(
+                    rateKey("register-ip", clientAddress(request)),
+                    REGISTER_RATE_LIMIT,
+                    AUTH_RATE_WINDOW_MS
+                );
+
+                if (!limit.allowed) {
+                    response.setHeader("retry-after", String(limit.retryAfterSeconds));
+                    sendJson(response, 429, { error: "rate_limited" });
+                    return;
+                }
+
                 const body = await readJsonBody(request);
                 const result = await authService.register(body);
                 sendJson(response, 201, result);
@@ -78,13 +115,60 @@ export function createServer({ pool = getPool(), accessTokenSecret = process.env
             }
 
             if (request.method === "POST" && path === "/v1/auth/sign-in") {
+                const ipLimit = authRateLimiter.consume(
+                    rateKey("sign-in-ip", clientAddress(request)),
+                    SIGN_IN_RATE_LIMIT,
+                    AUTH_RATE_WINDOW_MS
+                );
+
                 const body = await readJsonBody(request);
+
+                if (!ipLimit.allowed) {
+                    response.setHeader("retry-after", String(ipLimit.retryAfterSeconds));
+                    sendJson(response, 429, { error: "rate_limited" });
+                    return;
+                }
+
+                const email =
+                    typeof body?.email === "string"
+                        ? body.email.trim().toLowerCase()
+                        : "";
+
+                if (email) {
+                    const credentialLimit = authRateLimiter.consume(
+                        rateKey("sign-in-email", email),
+                        SIGN_IN_RATE_LIMIT,
+                        AUTH_RATE_WINDOW_MS
+                    );
+
+                    if (!credentialLimit.allowed) {
+                        response.setHeader(
+                            "retry-after",
+                            String(credentialLimit.retryAfterSeconds)
+                        );
+                        sendJson(response, 429, { error: "rate_limited" });
+                        return;
+                    }
+                }
+
                 const result = await authService.signIn(body);
                 sendJson(response, 200, result);
                 return;
             }
 
             if (request.method === "POST" && path === "/v1/auth/refresh") {
+                const limit = authRateLimiter.consume(
+                    rateKey("refresh-ip", clientAddress(request)),
+                    REFRESH_RATE_LIMIT,
+                    AUTH_RATE_WINDOW_MS
+                );
+
+                if (!limit.allowed) {
+                    response.setHeader("retry-after", String(limit.retryAfterSeconds));
+                    sendJson(response, 429, { error: "rate_limited" });
+                    return;
+                }
+
                 const body = await readJsonBody(request);
                 const result = await authService.refresh(body?.refreshToken);
                 sendJson(response, 200, result);
