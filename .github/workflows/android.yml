@@ -28,17 +28,6 @@ jobs:
         with:
           gradle-version: "9.6.0"
 
-      - name: Install Android SDK components
-        shell: bash
-        run: |
-          set -euo pipefail
-          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
-          if [ ! -x "$SDKMANAGER" ]; then
-            SDKMANAGER="$(command -v sdkmanager)"
-          fi
-          yes | "$SDKMANAGER" --licenses >/dev/null || true
-          "$SDKMANAGER" "platform-tools" "platforms;android-37"
-
       - name: Build debug APK
         run: gradle --no-daemon :app:assembleDebug
 
