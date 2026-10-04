@@ -1,5 +1,10 @@
+/*
+ * Copyright © 2026 Aarav Singh (Pauze). All rights reserved.
+ */
+
 import http from "node:http";
 import { createAuthService, AuthError } from "./auth.js";
+import { createMatrixTokenService } from "./matrix-auth.js";
 import { createSocialService, SocialError } from "./social.js";
 import { getPool } from "./db.js";
 import { RateLimiter } from "./rate-limit.js";
@@ -10,6 +15,7 @@ const AUTH_RATE_WINDOW_MS = 15 * 60 * 1000;
 const REGISTER_RATE_LIMIT = 5;
 const SIGN_IN_RATE_LIMIT = 10;
 const REFRESH_RATE_LIMIT = 30;
+const MATRIX_TOKEN_RATE_LIMIT = 10;
 const trustProxy = process.env.TRUST_PROXY === "true";
 
 if (!Number.isInteger(port) || port < 1 || port > 65535) {
@@ -71,13 +77,25 @@ function bearerToken(request) {
 export function createServer({
     pool = getPool(),
     accessTokenSecret = process.env.ACCESS_TOKEN_SECRET,
+    matrixJwtSecret = process.env.MATRIX_JWT_SECRET,
+    matrixJwtIssuer = process.env.MATRIX_JWT_ISSUER,
+    matrixJwtAudience = process.env.MATRIX_JWT_AUDIENCE,
     authRateLimiter = new RateLimiter()
 } = {}) {
     let authService = null;
     let socialService = null;
+    let matrixTokenService = null;
     if (pool && accessTokenSecret) {
         authService = createAuthService({ pool, accessTokenSecret });
         socialService = createSocialService({ pool });
+    }
+
+    if (matrixJwtSecret && matrixJwtIssuer && matrixJwtAudience) {
+        matrixTokenService = createMatrixTokenService({
+            matrixJwtSecret,
+            issuer: matrixJwtIssuer,
+            audience: matrixJwtAudience
+        });
     }
 
     return http.createServer(async (request, response) => {
@@ -186,6 +204,37 @@ export function createServer({
             if (request.method === "POST" && path === "/v1/auth/sign-out") {
                 await authService.signOut(auth.sessionId);
                 sendJson(response, 200, { ok: true });
+                return;
+            }
+
+            if (request.method === "POST" && path === "/v1/messaging/matrix-token") {
+                if (!matrixTokenService) {
+                    sendJson(response, 503, { error: "messaging_not_configured" });
+                    return;
+                }
+
+                const limit = authRateLimiter.consume(
+                    rateKey("matrix-token-session", auth.sessionId),
+                    MATRIX_TOKEN_RATE_LIMIT,
+                    AUTH_RATE_WINDOW_MS
+                );
+
+                if (!limit.allowed) {
+                    response.setHeader("retry-after", String(limit.retryAfterSeconds));
+                    sendJson(response, 429, { error: "rate_limited" });
+                    return;
+                }
+
+                const profile = await authService.getProfile(auth.userId);
+                const token = await matrixTokenService.issueToken({
+                    username: profile.username,
+                    displayName: profile.displayName
+                });
+
+                sendJson(response, 200, {
+                    token,
+                    expiresInSeconds: matrixTokenService.ttlSeconds
+                });
                 return;
             }
 
