@@ -51,7 +51,12 @@ class NetworkAuthRepository(
     }
 
     override suspend fun currentSession(): Session? = withContext(Dispatchers.IO) {
-        inMemorySession?.let { return@withContext it }
+        inMemorySession?.let { current ->
+            val now = System.currentTimeMillis() / 1000L
+            if (current.expiresAtEpochSeconds > now + 30L) {
+                return@withContext current
+            }
+        }
 
         val refreshToken = sessionStore.readRefreshToken()
             ?: return@withContext null
