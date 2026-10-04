@@ -60,3 +60,18 @@ interface AuthRepository {
 
     suspend fun currentSession(): Session?
 }
+data class FriendProfile(
+    val userId: UserId,
+    val username: String,
+    val displayName: String,
+    val bio: String,
+    val avatarMimeType: String?
+)
+
+data class PendingFriendRequest(
+    val id: FriendRequestId,
+    val status: FriendRequestStatus,
+    val createdAtEpochSeconds: Long,
+    val user: FriendProfile
+)
+
