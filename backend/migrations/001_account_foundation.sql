@@ -61,3 +61,11 @@ create index if not exists friend_requests_to_user_idx
 
 create index if not exists sessions_user_idx
     on sessions (user_id, expires_at desc);
+
+ 
+create unique index if not exists friend_requests_pending_pair_unique
+    on friend_requests (
+        least(from_user_id, to_user_id),
+        greatest(from_user_id, to_user_id)
+    )
+    where status = 'PENDING';
