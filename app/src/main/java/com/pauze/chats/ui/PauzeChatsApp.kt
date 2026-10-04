@@ -24,6 +24,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.pauze.chats.PauzeChatsApplication
 import com.pauze.chats.ui.auth.AuthScreen
 import com.pauze.chats.ui.auth.AuthViewModel
+import com.pauze.chats.ui.social.FriendsScreen
+import com.pauze.chats.ui.social.ProfileSettingsScreen
+import com.pauze.chats.ui.social.SocialViewModel
+import com.pauze.chats.ui.theme.PauzeChatsTheme
 
 @Composable
 fun PauzeChatsApp() {
@@ -35,68 +39,110 @@ fun PauzeChatsApp() {
     )
     val authState by authViewModel.state.collectAsStateWithLifecycle()
 
-    if (!authState.isAuthenticated) {
-        AuthScreen(
-            state = authState,
-            onModeChange = authViewModel::setMode,
-            onSignIn = authViewModel::signIn,
-            onSignUp = authViewModel::signUp
-        )
-    } else {
-        AuthenticatedApp()
+    PauzeChatsTheme {
+        if (!authState.isAuthenticated) {
+            AuthScreen(
+                state = authState,
+                onModeChange = authViewModel::setMode,
+                onSignIn = authViewModel::signIn,
+                onSignUp = authViewModel::signUp
+            )
+        } else {
+            AuthenticatedApp(
+                authViewModel = authViewModel,
+                application = application
+            )
+        }
     }
+}
+
+@Composable
+private fun AuthenticatedApp(
+    authViewModel: AuthViewModel,
+    application: PauzeChatsApplication
+) {
+    val socialViewModel: SocialViewModel = viewModel(
+        factory = SocialViewModel.Factory(application.socialRepository)
+    )
+    val socialState by socialViewModel.state.collectAsStateWithLifecycle()
+
+    AuthenticatedNavigation(
+        socialState = socialState,
+        onRefreshSocial = socialViewModel::refresh,
+        onLookup = socialViewModel::lookup,
+        onSendFriendRequest = socialViewModel::sendFriendRequest,
+        onRespondToRequest = socialViewModel::respondToRequest,
+        onSaveProfile = socialViewModel::saveProfile,
+        onSignOut = authViewModel::signOut
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun AuthenticatedApp() {
-    MaterialTheme {
-        var selectedTab by androidx.compose.runtime.remember {
-            androidx.compose.runtime.mutableIntStateOf(0)
-        }
+private fun AuthenticatedNavigation(
+    socialState: com.pauze.chats.ui.social.SocialUiState,
+    onRefreshSocial: () -> Unit,
+    onLookup: (String) -> Unit,
+    onSendFriendRequest: (String) -> Unit,
+    onRespondToRequest: (String, String) -> Unit,
+    onSaveProfile: (String, String) -> Unit,
+    onSignOut: () -> Unit
+) {
+    var selectedTab by androidx.compose.runtime.remember {
+        androidx.compose.runtime.mutableIntStateOf(0)
+    }
 
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = {
-                        Column {
-                            Text("PauzeChats")
-                            Text(
-                                text = "Private alpha",
-                                style = MaterialTheme.typography.labelSmall
-                            )
-                        }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Column {
+                        Text("PauzeChats")
+                        Text(
+                            text = "Private alpha",
+                            style = MaterialTheme.typography.labelSmall
+                        )
                     }
-                )
-            },
-            bottomBar = {
-                NavigationBar {
-                    NavigationBarItem(
-                        selected = selectedTab == 0,
-                        onClick = { selectedTab = 0 },
-                        icon = { Text("C") },
-                        label = { Text("Chats") }
-                    )
-                    NavigationBarItem(
-                        selected = selectedTab == 1,
-                        onClick = { selectedTab = 1 },
-                        icon = { Text("F") },
-                        label = { Text("Friends") }
-                    )
-                    NavigationBarItem(
-                        selected = selectedTab == 2,
-                        onClick = { selectedTab = 2 },
-                        icon = { Text("S") },
-                        label = { Text("Settings") }
-                    )
                 }
+            )
+        },
+        bottomBar = {
+            NavigationBar {
+                NavigationBarItem(
+                    selected = selectedTab == 0,
+                    onClick = { selectedTab = 0 },
+                    icon = { Text("C") },
+                    label = { Text("Chats") }
+                )
+                NavigationBarItem(
+                    selected = selectedTab == 1,
+                    onClick = { selectedTab = 1 },
+                    icon = { Text("F") },
+                    label = { Text("Friends") }
+                )
+                NavigationBarItem(
+                    selected = selectedTab == 2,
+                    onClick = { selectedTab = 2 },
+                    icon = { Text("S") },
+                    label = { Text("Profile") }
+                )
             }
-        ) { paddingValues ->
-            when (selectedTab) {
-                0 -> ChatsFoundationScreen(Modifier.padding(paddingValues))
-                1 -> FriendsFoundationScreen(Modifier.padding(paddingValues))
-                else -> SettingsFoundationScreen(Modifier.padding(paddingValues))
-            }
+        }
+    ) { paddingValues ->
+        when (selectedTab) {
+            0 -> ChatsFoundationScreen(Modifier.padding(paddingValues))
+            1 -> FriendsScreen(
+                state = socialState,
+                onLookup = onLookup,
+                onSendFriendRequest = onSendFriendRequest,
+                onRespondToRequest = onRespondToRequest,
+                onRefresh = onRefreshSocial
+            )
+            else -> ProfileSettingsScreen(
+                state = socialState,
+                onSave = onSaveProfile,
+                onSignOut = onSignOut
+            )
         }
     }
 }
@@ -118,52 +164,6 @@ private fun ChatsFoundationScreen(modifier: Modifier = Modifier) {
             Spacer(Modifier.padding(4.dp))
             Text(
                 "Personal and group conversations will live here once messaging foundations are ready.",
-                style = MaterialTheme.typography.bodyMedium
-            )
-        }
-    }
-}
-
-@Composable
-private fun FriendsFoundationScreen(modifier: Modifier = Modifier) {
-    Surface(modifier = modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(20.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                "Friends",
-                style = MaterialTheme.typography.headlineSmall
-            )
-            Spacer(Modifier.padding(4.dp))
-            Text(
-                "Add people by their unique username.",
-                style = MaterialTheme.typography.bodyMedium
-            )
-        }
-    }
-}
-
-@Composable
-private fun SettingsFoundationScreen(modifier: Modifier = Modifier) {
-    Surface(modifier = modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(20.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                "Settings",
-                style = MaterialTheme.typography.headlineSmall
-            )
-            Spacer(Modifier.padding(4.dp))
-            Text(
-                "Account, privacy, notifications, sessions, and presence controls will live here.",
                 style = MaterialTheme.typography.bodyMedium
             )
         }
