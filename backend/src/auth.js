@@ -70,6 +70,7 @@ export function createAuthService({ pool, accessTokenSecret }) {
             .sign(jwtKey);
 
         return {
+            sessionId,
             accessToken,
             refreshToken,
             expiresInSeconds: ACCESS_TOKEN_TTL_SECONDS
@@ -267,6 +268,7 @@ export function createAuthService({ pool, accessTokenSecret }) {
 
             return {
                 session: {
+                    sessionId: session.id,
                     accessToken,
                     refreshToken: newRefreshToken,
                     expiresInSeconds: ACCESS_TOKEN_TTL_SECONDS
