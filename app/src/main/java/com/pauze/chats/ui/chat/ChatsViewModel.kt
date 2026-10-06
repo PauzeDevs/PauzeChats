@@ -12,6 +12,7 @@ import com.pauze.chats.account.AuthRepository
 import com.pauze.chats.messaging.MessagingSessionConfig
 import com.pauze.chats.messaging.matrix.MatrixConversationRepository
 import com.pauze.chats.messaging.matrix.MatrixMessagingSession
+import com.pauze.chats.messaging.matrix.MatrixMessagingSyncController
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,7 +27,8 @@ data class ChatsUiState(
 class ChatsViewModel(
     private val authRepository: AuthRepository,
     private val messagingSession: MatrixMessagingSession,
-    private val conversationRepository: MatrixConversationRepository
+    private val conversationRepository: MatrixConversationRepository,
+    private val messagingSyncController: MatrixMessagingSyncController
 ) : ViewModel() {
     private val _state = MutableStateFlow(ChatsUiState())
     val state: StateFlow<ChatsUiState> = _state.asStateFlow()
@@ -64,11 +66,21 @@ class ChatsViewModel(
                 )
             ).fold(
                 onSuccess = {
-                    conversationRepository.listConversations().fold(
-                        onSuccess = { conversations ->
-                            _state.value = ChatsUiState(
-                                isLoading = false,
-                                conversations = conversations
+                    messagingSyncController.start().fold(
+                        onSuccess = {
+                            conversationRepository.listConversations().fold(
+                                onSuccess = { conversations ->
+                                    _state.value = ChatsUiState(
+                                        isLoading = false,
+                                        conversations = conversations
+                                    )
+                                },
+                                onFailure = { error ->
+                                    _state.value = ChatsUiState(
+                                        isLoading = false,
+                                        message = errorMessage(error)
+                                    )
+                                }
                             )
                         },
                         onFailure = { error ->
@@ -96,7 +108,8 @@ class ChatsViewModel(
     class Factory(
         private val authRepository: AuthRepository,
         private val messagingSession: MatrixMessagingSession,
-        private val conversationRepository: MatrixConversationRepository
+        private val conversationRepository: MatrixConversationRepository,
+        private val messagingSyncController: MatrixMessagingSyncController
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -104,7 +117,8 @@ class ChatsViewModel(
             return ChatsViewModel(
                 authRepository,
                 messagingSession,
-                conversationRepository
+                conversationRepository,
+                messagingSyncController
             ) as T
         }
     }
