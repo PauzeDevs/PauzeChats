@@ -75,7 +75,8 @@ private fun AuthenticatedApp(
         factory = ChatsViewModel.Factory(
             application.authRepository,
             application.messagingSession,
-            application.conversationRepository
+            application.conversationRepository,
+            application.messagingSyncController
         )
     )
     val chatsState by chatsViewModel.state.collectAsStateWithLifecycle()
