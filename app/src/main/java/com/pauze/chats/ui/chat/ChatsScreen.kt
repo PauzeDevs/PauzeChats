@@ -26,6 +26,7 @@ import com.pauze.chats.messaging.ConversationSummary
 fun ChatsScreen(
     state: ChatsUiState,
     onRefresh: () -> Unit,
+    onConversationClick: (ConversationSummary) -> Unit,
     modifier: Modifier = Modifier
 ) {
     when {
@@ -73,7 +74,10 @@ fun ChatsScreen(
                     items = state.conversations,
                     key = { it.id.value }
                 ) { conversation ->
-                    ConversationRow(conversation)
+                    ConversationRow(
+                        conversation = conversation,
+                        onClick = { onConversationClick(conversation) }
+                    )
                 }
             }
         }
@@ -81,7 +85,10 @@ fun ChatsScreen(
 }
 
 @Composable
-private fun ConversationRow(conversation: ConversationSummary) {
+private fun ConversationRow(
+    conversation: ConversationSummary,
+    onClick: () -> Unit
+) {
     ListItem(
         headlineContent = {
             Text(conversation.title)
@@ -99,6 +106,7 @@ private fun ConversationRow(conversation: ConversationSummary) {
                 )
             }
         },
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        tonalElevation = 0.dp
     )
 }
