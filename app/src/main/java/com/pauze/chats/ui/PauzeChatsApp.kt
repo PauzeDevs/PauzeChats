@@ -24,6 +24,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.pauze.chats.PauzeChatsApplication
 import com.pauze.chats.ui.auth.AuthScreen
+import com.pauze.chats.ui.chat.ChatsScreen
+import com.pauze.chats.ui.chat.ChatsViewModel
 import com.pauze.chats.ui.auth.AuthViewModel
 import com.pauze.chats.ui.social.FriendsScreen
 import com.pauze.chats.ui.social.ProfileSettingsScreen
@@ -65,12 +67,23 @@ private fun AuthenticatedApp(
     authViewModel: AuthViewModel,
     application: PauzeChatsApplication
 ) {
+    val chatsViewModel: ChatsViewModel = viewModel(
+        factory = ChatsViewModel.Factory(
+            application.authRepository,
+            application.messagingSession,
+            application.conversationRepository
+        )
+    )
+    val chatsState by chatsViewModel.state.collectAsStateWithLifecycle()
+
     val socialViewModel: SocialViewModel = viewModel(
         factory = SocialViewModel.Factory(application.socialRepository)
     )
     val socialState by socialViewModel.state.collectAsStateWithLifecycle()
 
     AuthenticatedNavigation(
+        chatsState = chatsState,
+        onRefreshChats = chatsViewModel::refresh,
         socialState = socialState,
         onRefreshSocial = socialViewModel::refresh,
         onLookup = socialViewModel::lookup,
@@ -84,6 +97,8 @@ private fun AuthenticatedApp(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AuthenticatedNavigation(
+    chatsState: com.pauze.chats.ui.chat.ChatsUiState,
+    onRefreshChats: () -> Unit,
     socialState: com.pauze.chats.ui.social.SocialUiState,
     onRefreshSocial: () -> Unit,
     onLookup: (String) -> Unit,
@@ -134,7 +149,11 @@ private fun AuthenticatedNavigation(
         }
     ) { paddingValues ->
         when (selectedTab) {
-            0 -> ChatsFoundationScreen(Modifier.padding(paddingValues))
+            0 -> ChatsScreen(
+                state = chatsState,
+                onRefresh = onRefreshChats,
+                modifier = Modifier.padding(paddingValues)
+            )
             1 -> FriendsScreen(
                 state = socialState,
                 onLookup = onLookup,
