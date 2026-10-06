@@ -29,9 +29,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.pauze.chats.PauzeChatsApplication
+import com.pauze.chats.messaging.ConversationSummary
 import com.pauze.chats.ui.auth.AuthScreen
 import com.pauze.chats.ui.chat.ChatDetailScreen
-import com.pauze.chats.ui.chat.ChatDetailViewModel
+import com.pauze.chats.ui.chat.ChatDetailUiState
 import com.pauze.chats.ui.chat.ChatsScreen
 import com.pauze.chats.ui.chat.ChatsViewModel
 import com.pauze.chats.ui.auth.AuthViewModel
@@ -75,7 +76,7 @@ private fun AuthenticatedApp(
     authViewModel: AuthViewModel,
     application: PauzeChatsApplication
 ) {
-    var selectedConversation by remember { mutableStateOf<com.pauze.chats.messaging.ConversationSummary?>(null) }
+    var selectedConversation by remember { mutableStateOf<ConversationSummary?>(null) }
 
     val chatsViewModel: ChatsViewModel = viewModel(
         factory = ChatsViewModel.Factory(
@@ -94,19 +95,14 @@ private fun AuthenticatedApp(
 
     if (selectedConversation != null) {
         val conversation = selectedConversation!!
-        val detailViewModel: ChatDetailViewModel = viewModel(
-            key = conversation.id.value,
-            factory = ChatDetailViewModel.Factory(
-                application.messageRepository,
-                conversation.id
-            )
-        )
-        val detailState by detailViewModel.state.collectAsStateWithLifecycle()
 
         ChatDetailScreen(
             title = conversation.title,
-            state = detailState,
-            onRefresh = detailViewModel::refresh,
+            state = ChatDetailUiState(
+                isLoading = false,
+                message = "Message history adapter is being integrated for this Matrix SDK version."
+            ),
+            onRefresh = {},
             onBack = { selectedConversation = null }
         )
         return
@@ -131,7 +127,7 @@ private fun AuthenticatedApp(
 private fun AuthenticatedNavigation(
     chatsState: com.pauze.chats.ui.chat.ChatsUiState,
     onRefreshChats: () -> Unit,
-    onConversationClick: (com.pauze.chats.messaging.ConversationSummary) -> Unit,
+    onConversationClick: (ConversationSummary) -> Unit,
     socialState: com.pauze.chats.ui.social.SocialUiState,
     onRefreshSocial: () -> Unit,
     onLookup: (String) -> Unit,
@@ -208,7 +204,7 @@ private fun AuthenticatedNavigation(
 private fun ChatsFoundationScreen(modifier: Modifier = Modifier) {
     Surface(modifier = modifier.fillMaxSize()) {
         Column(
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxSize()
                 .padding(20.dp),
             verticalArrangement = Arrangement.Center,
