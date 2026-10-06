@@ -29,7 +29,7 @@ class MatrixConversationRepository(
                             unreadCount = 0
                         )
                     }
-                    .sortedBy(String.CASE_INSENSITIVE_ORDER) { it.title }
+                    .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.title })
             }
         }
 }
