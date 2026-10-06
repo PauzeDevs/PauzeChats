@@ -19,6 +19,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,6 +30,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.pauze.chats.PauzeChatsApplication
 import com.pauze.chats.ui.auth.AuthScreen
+import com.pauze.chats.ui.chat.ChatDetailScreen
+import com.pauze.chats.ui.chat.ChatDetailViewModel
 import com.pauze.chats.ui.chat.ChatsScreen
 import com.pauze.chats.ui.chat.ChatsViewModel
 import com.pauze.chats.ui.auth.AuthViewModel
@@ -71,6 +75,8 @@ private fun AuthenticatedApp(
     authViewModel: AuthViewModel,
     application: PauzeChatsApplication
 ) {
+    var selectedConversation by remember { mutableStateOf<com.pauze.chats.messaging.ConversationSummary?>(null) }
+
     val chatsViewModel: ChatsViewModel = viewModel(
         factory = ChatsViewModel.Factory(
             application.authRepository,
@@ -86,9 +92,30 @@ private fun AuthenticatedApp(
     )
     val socialState by socialViewModel.state.collectAsStateWithLifecycle()
 
+    if (selectedConversation != null) {
+        val conversation = selectedConversation!!
+        val detailViewModel: ChatDetailViewModel = viewModel(
+            key = conversation.id.value,
+            factory = ChatDetailViewModel.Factory(
+                application.messageRepository,
+                conversation.id
+            )
+        )
+        val detailState by detailViewModel.state.collectAsStateWithLifecycle()
+
+        ChatDetailScreen(
+            title = conversation.title,
+            state = detailState,
+            onRefresh = detailViewModel::refresh,
+            onBack = { selectedConversation = null }
+        )
+        return
+    }
+
     AuthenticatedNavigation(
         chatsState = chatsState,
         onRefreshChats = chatsViewModel::refresh,
+        onConversationClick = { selectedConversation = it },
         socialState = socialState,
         onRefreshSocial = socialViewModel::refresh,
         onLookup = socialViewModel::lookup,
@@ -104,6 +131,7 @@ private fun AuthenticatedApp(
 private fun AuthenticatedNavigation(
     chatsState: com.pauze.chats.ui.chat.ChatsUiState,
     onRefreshChats: () -> Unit,
+    onConversationClick: (com.pauze.chats.messaging.ConversationSummary) -> Unit,
     socialState: com.pauze.chats.ui.social.SocialUiState,
     onRefreshSocial: () -> Unit,
     onLookup: (String) -> Unit,
@@ -157,6 +185,7 @@ private fun AuthenticatedNavigation(
             0 -> ChatsScreen(
                 state = chatsState,
                 onRefresh = onRefreshChats,
+                onConversationClick = onConversationClick,
                 modifier = Modifier.padding(paddingValues)
             )
             1 -> FriendsScreen(
@@ -179,7 +208,7 @@ private fun AuthenticatedNavigation(
 private fun ChatsFoundationScreen(modifier: Modifier = Modifier) {
     Surface(modifier = modifier.fillMaxSize()) {
         Column(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxSize()
                 .padding(20.dp),
             verticalArrangement = Arrangement.Center,
