@@ -9,7 +9,6 @@ import com.pauze.chats.account.NetworkAuthRepository
 import com.pauze.chats.account.NetworkSocialRepository
 import com.pauze.chats.messaging.matrix.MatrixAuthApiClient
 import com.pauze.chats.messaging.matrix.MatrixConversationRepository
-import com.pauze.chats.messaging.matrix.MatrixMessageRepository
 import com.pauze.chats.messaging.matrix.MatrixMessagingSession
 import com.pauze.chats.messaging.matrix.MatrixMessagingSyncController
 import com.pauze.chats.messaging.matrix.MatrixSdkClientFactory
@@ -27,9 +26,6 @@ class PauzeChatsApplication : Application() {
         private set
 
     lateinit var conversationRepository: MatrixConversationRepository
-        private set
-
-    lateinit var messageRepository: MatrixMessageRepository
         private set
 
     lateinit var messagingSyncController: MatrixMessagingSyncController
@@ -53,9 +49,6 @@ class PauzeChatsApplication : Application() {
             sessionStore = matrixSessionStore
         )
         conversationRepository = MatrixConversationRepository {
-            messagingSession.clientOrNull()
-        }
-        messageRepository = MatrixMessageRepository {
             messagingSession.clientOrNull()
         }
         messagingSyncController = MatrixMessagingSyncController {
