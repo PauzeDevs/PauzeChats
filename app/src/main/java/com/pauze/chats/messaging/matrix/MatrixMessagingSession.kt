@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright © 2026 Aarav Singh (Pauze). All rights reserved.
  */
 
@@ -19,6 +19,8 @@ class MatrixMessagingSession(
 
     override val isInitialized: Boolean
         get() = currentClient != null
+
+    fun clientOrNull(): Client? = currentClient
 
     override suspend fun initialize(
         config: MessagingSessionConfig
