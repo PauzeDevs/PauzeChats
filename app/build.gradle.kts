@@ -4,6 +4,7 @@ plugins {
 }
 
 val apiBaseUrl = providers.gradleProperty("pauzeApiBaseUrl").orNull ?: ""
+val matrixHomeserverUrl = providers.gradleProperty("pauzeMatrixHomeserverUrl").orNull ?: ""
 
 android {
     namespace = "com.pauze.chats"
@@ -15,7 +16,8 @@ android {
 
     defaultConfig {
         applicationId = "com.pauze.chats"
-        buildConfigField("String", "PAUZE_API_BASE_URL", "\"$apiBaseUrl\"")
+        buildConfigField("String", "PAUZE_API_BASE_URL", ""$apiBaseUrl"")
+        buildConfigField("String", "PAUZE_MATRIX_HOMESERVER_URL", ""$matrixHomeserverUrl"")
         minSdk = 26
         targetSdk = 37
         versionCode = 1
@@ -53,6 +55,7 @@ dependencies {
 
     implementation("androidx.activity:activity-compose:1.13.0")
     implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.material:material3-window-size-class")
     implementation("androidx.compose.material:material-icons-core")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
