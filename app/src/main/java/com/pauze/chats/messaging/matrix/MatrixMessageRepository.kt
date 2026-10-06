@@ -9,10 +9,13 @@ import com.pauze.chats.messaging.MessageId
 import com.pauze.chats.messaging.MessageRepository
 import com.pauze.chats.messaging.MessageSummary
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import org.matrix.rustcomponents.sdk.Client
 import org.matrix.rustcomponents.sdk.MessageType
 import org.matrix.rustcomponents.sdk.MsgLikeKind
+import org.matrix.rustcomponents.sdk.TimelineDiff
+import org.matrix.rustcomponents.sdk.TimelineItem
 
 class MatrixMessageRepository(
     private val clientProvider: () -> Client?
@@ -27,8 +30,11 @@ class MatrixMessageRepository(
             val room = client.rooms().firstOrNull { it.id() == conversationId.value }
                 ?: error("Conversation not found")
 
-            val timeline = room.timeline()
-            val (items, _) = timeline.subscribe()
+            val diffs = room.timeline()
+                .timelineDiffFlow()
+                .first()
+
+            val items = diffs.flatMap(::itemsFromDiff)
 
             items.mapNotNull { item ->
                 val event = item.asEvent() ?: return@mapNotNull null
@@ -49,11 +55,22 @@ class MatrixMessageRepository(
                 MessageSummary(
                     id = MessageId(event.eventOrTransactionId.toString()),
                     conversationId = conversationId,
-                    senderName = event.senderProfile().toString(),
+                    senderName = event.sender(),
                     bodyPreview = body,
                     sentAtEpochSeconds = event.timestamp().toLong() / 1_000
                 )
             }.takeLast(100)
         }
     }
+
+    private fun itemsFromDiff(diff: TimelineDiff): List<TimelineItem> =
+        when (diff) {
+            is TimelineDiff.Append -> diff.values
+            is TimelineDiff.Reset -> diff.values
+            is TimelineDiff.PushBack -> listOf(diff.value)
+            is TimelineDiff.PushFront -> listOf(diff.value)
+            is TimelineDiff.Insert -> listOf(diff.value)
+            is TimelineDiff.Set -> listOf(diff.value)
+            else -> emptyList()
+        }
 }
