@@ -4,6 +4,7 @@
 
 package com.pauze.chats.ui.chat
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -106,7 +107,8 @@ private fun ConversationRow(
                 )
             }
         },
-        modifier = Modifier.fillMaxWidth(),
-        tonalElevation = 0.dp
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
     )
 }
