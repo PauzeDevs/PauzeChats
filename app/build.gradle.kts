@@ -1,9 +1,14 @@
+/*
+ * Copyright © 2026 Aarav Singh (Pauze). All rights reserved.
+ */
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
 val apiBaseUrl = providers.gradleProperty("pauzeApiBaseUrl").orNull ?: ""
+val matrixHomeserverUrl = providers.gradleProperty("pauzeMatrixHomeserverUrl").orNull ?: ""
 
 android {
     namespace = "com.pauze.chats"
@@ -16,6 +21,7 @@ android {
     defaultConfig {
         applicationId = "com.pauze.chats"
         buildConfigField("String", "PAUZE_API_BASE_URL", "\"$apiBaseUrl\"")
+        buildConfigField("String", "PAUZE_MATRIX_HOMESERVER_URL", "\"$matrixHomeserverUrl\"")
         minSdk = 26
         targetSdk = 37
         versionCode = 1
