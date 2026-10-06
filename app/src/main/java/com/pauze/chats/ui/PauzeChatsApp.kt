@@ -102,7 +102,6 @@ private fun AuthenticatedApp(
                 isLoading = false,
                 message = "Message history adapter is being integrated for this Matrix SDK version."
             ),
-            onRefresh = {},
             onBack = { selectedConversation = null }
         )
         return
