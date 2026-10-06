@@ -20,8 +20,9 @@ class MatrixMessagingSyncController(
 
     override suspend fun start(): Result<Unit> = withContext(Dispatchers.IO) {
         runCatching {
-            check(taskHandle == null || taskHandle?.isFinished() == true) {
-                "Matrix sync is already running"
+            val existingTask = taskHandle
+            if (existingTask != null && !existingTask.isFinished()) {
+                return@runCatching
             }
 
             val client = clientProvider()
