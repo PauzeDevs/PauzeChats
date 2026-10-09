@@ -2,33 +2,22 @@
 
 Private. Invite-only. Built for friends.
 
-PauzeChats is an Android-first private social messenger focused on personal and group conversations, friend-by-username discovery, lightweight profiles, and custom activity presence.
+PauzeChats is a small, invite-only Android messenger for 4–5 people. The target experience is the simplicity of the built-in Android messaging app, not a feature-heavy WhatsApp or Discord clone.
 
 ## Product scope
 
-### Messaging
-- 1-to-1 personal chats
-- private group chats
-- E2EE as a hard security requirement
-- replies, reactions, edits, and deletes
-- media/file messaging
-- push notifications without exposing private message plaintext
+### Required
+- Private one-to-one chats and small group chats
+- End-to-end encryption using the established Matrix Rust SDK
+- Animated profile pictures with GIF support
+- A compact sticker picker
+- Basic accounts, usernames, friends, and profile settings
 
-### Accounts
-- email + password login
-- unique username for adding friends
-- friend requests
-- profile with display name, bio, and animated/static avatar support
-
-### Presence
-- Amazon Music activity
-- game activity
-- custom status
-- user-controlled activity visibility
-
-## Explicit non-goals
-
-There are no Discord-style servers, text channels, voice channels, roles, community discovery, or server permissions.
+### Explicitly out of scope for now
+- Public communities, servers, channels, feeds, and discovery
+- Music/game activity integrations and custom presence systems
+- Calls, stories, payments, and other social features
+- Paid infrastructure or paid SDK dependencies
 
 ## Phase 1 — account and identity foundation
 

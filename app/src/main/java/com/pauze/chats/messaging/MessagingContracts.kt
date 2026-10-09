@@ -12,7 +12,8 @@ data class ConversationSummary(
     val id: ConversationId,
     val title: String,
     val isDirect: Boolean,
-    val unreadCount: Int
+    val unreadCount: Int,
+    val avatarUrl: String? = null
 )
 
 data class MessageId(
