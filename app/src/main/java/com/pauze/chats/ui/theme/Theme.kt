@@ -1,3 +1,7 @@
+/*
+ * Copyright © 2026 Aarav Singh (Pauze). All rights reserved.
+ */
+
 package com.pauze.chats.ui.theme
 
 import androidx.compose.material3.MaterialTheme
