@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.pauze.chats.messaging.ConversationSummary
+import com.pauze.chats.ui.components.AnimatedAvatar
 
 @Composable
 fun ChatsScreen(
@@ -91,6 +92,13 @@ private fun ConversationRow(
     onClick: () -> Unit
 ) {
     ListItem(
+        leadingContent = {
+            AnimatedAvatar(
+                imageUrl = conversation.avatarUrl,
+                displayName = conversation.title,
+                size = 48.dp
+            )
+        },
         headlineContent = {
             Text(conversation.title)
         },
