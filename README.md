@@ -4,7 +4,6 @@
   <img src="https://readme-typing-svg.demolab.com?font=Inter&weight=600&size=22&duration=2600&pause=700&color=4C8DFF&center=true&vCenter=true&width=680&lines=PauzeChats" alt="Animated header: PauzeChats">
 </p>
 
-
 Private. Invite-only. Built for friends.
 
 PauzeChats is an Android-first private social messenger focused on encrypted personal and group chats, friend-by-username discovery, lightweight profiles, and custom activity presence.
@@ -69,6 +68,6 @@ Requires JDK 17, Android SDK 37, and Gradle 9.6. From Android Studio, open the r
 
 ### Backend API
 
-Requires Node.js 24 and a PostgreSQL database. From the `backend/` directory, install dependencies with `npm install`, run syntax checks with `npm run check`, run unit tests with `npm test`, and start the API with `npm start`. Backend configuration is defined in [backend/.env.example](backend/.env.example): `PORT` (default 8080), `DATABASE_URL`, and `ACCESS_TOKEN_SECRET`. The example file is a reference; the server does not automatically load `.env`, so provide these values in the process environment or configure Node to load the file. Apply `backend/migrations/001_account_foundation.sql` to PostgreSQL before starting the API. Android builds can set `pauzeApiBaseUrl` as a Gradle project property.
+Requires Node.js 24 and a PostgreSQL database. From the `backend/` directory, install dependencies with `npm install`, run syntax checks with `npm run check`, run unit tests with `npm test`, and start the API with `npm start`. Backend configuration is defined in [backend/.env.example](backend/.env.example): `PORT` (default 8080), `DATABASE_URL`, and `ACCESS_TOKEN_SECRET`, and optional `DB_POOL_MAX` (default 10). The example file is a reference; the server does not automatically load `.env`, so provide these values in the process environment or configure Node to load the file. Apply `backend/migrations/001_account_foundation.sql` to PostgreSQL before starting the API. Android builds can set `pauzeApiBaseUrl` as a Gradle project property.
 
 GitHub Actions builds the Android debug APK and runs Android unit tests. A separate workflow installs backend dependencies, runs its syntax check, and runs the Node test suite.
