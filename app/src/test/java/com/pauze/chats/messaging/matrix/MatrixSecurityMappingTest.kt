@@ -34,6 +34,7 @@ class MatrixSecurityMappingTest {
     fun reportsRoomEncryptionStateExplicitly() {
         assertEquals(RoomEncryptionStatus.ENCRYPTED, true.toRoomEncryptionStatus())
         assertEquals(RoomEncryptionStatus.NOT_ENCRYPTED, false.toRoomEncryptionStatus())
+        assertEquals(RoomEncryptionStatus.UNKNOWN, null.toRoomEncryptionStatus())
     }
 
     @Test
