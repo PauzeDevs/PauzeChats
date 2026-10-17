@@ -9,6 +9,8 @@ import com.pauze.chats.account.NetworkAuthRepository
 import com.pauze.chats.account.NetworkSocialRepository
 import com.pauze.chats.messaging.matrix.MatrixAuthApiClient
 import com.pauze.chats.messaging.matrix.MatrixConversationRepository
+import com.pauze.chats.messaging.matrix.MatrixDeviceVerificationRepository
+import com.pauze.chats.messaging.matrix.SdkMatrixVerificationApi
 import com.pauze.chats.messaging.matrix.MatrixMessagingSession
 import com.pauze.chats.messaging.matrix.MatrixMessagingSyncController
 import com.pauze.chats.messaging.matrix.MatrixSdkClientFactory
@@ -29,6 +31,9 @@ class PauzeChatsApplication : Application() {
         private set
 
     lateinit var messagingSyncController: MatrixMessagingSyncController
+        private set
+
+    lateinit var deviceVerificationRepository: MatrixDeviceVerificationRepository
         private set
 
     override fun onCreate() {
@@ -53,6 +58,9 @@ class PauzeChatsApplication : Application() {
         }
         messagingSyncController = MatrixMessagingSyncController {
             messagingSession.clientOrNull()
+        }
+        deviceVerificationRepository = MatrixDeviceVerificationRepository {
+            messagingSession.clientOrNull()?.let(::SdkMatrixVerificationApi)
         }
     }
 }

@@ -12,8 +12,21 @@ data class ConversationSummary(
     val id: ConversationId,
     val title: String,
     val isDirect: Boolean,
-    val unreadCount: Int
+    val unreadCount: Int,
+    val encryptionStatus: RoomEncryptionStatus = RoomEncryptionStatus.UNKNOWN
 )
+
+enum class RoomEncryptionStatus {
+    ENCRYPTED,
+    NOT_ENCRYPTED,
+    UNKNOWN
+}
+
+enum class DeviceVerificationStatus {
+    VERIFIED,
+    UNVERIFIED,
+    UNKNOWN
+}
 
 data class MessageId(
     val value: String
@@ -58,5 +71,8 @@ interface MessagingSyncController {
 }
 
 interface DeviceVerificationRepository {
-    suspend fun listVerifiableDevices(): Result<List<String>>
+    suspend fun currentDeviceStatus(): Result<DeviceVerificationStatus>
+
+    /** Starts the Matrix device verification request. Completion requires SAS confirmation. */
+    suspend fun requestCurrentDeviceVerification(): Result<Unit>
 }
