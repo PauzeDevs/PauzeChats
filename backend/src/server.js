@@ -1,6 +1,7 @@
 import http from "node:http";
 import { createAuthService, AuthError } from "./auth.js";
 import { createSocialService, SocialError } from "./social.js";
+import { createMessagingService, MessagingError } from "./messaging.js";
 import { getPool } from "./db.js";
 
 const port = Number.parseInt(process.env.PORT ?? "8080", 10);
@@ -50,9 +51,11 @@ function bearerToken(request) {
 export function createServer({ pool = getPool(), accessTokenSecret = process.env.ACCESS_TOKEN_SECRET } = {}) {
     let authService = null;
     let socialService = null;
+    let messagingService = null;
     if (pool && accessTokenSecret) {
         authService = createAuthService({ pool, accessTokenSecret });
         socialService = createSocialService({ pool });
+        messagingService = createMessagingService({ pool });
     }
 
     return http.createServer(async (request, response) => {
@@ -102,6 +105,44 @@ export function createServer({ pool = getPool(), accessTokenSecret = process.env
             if (request.method === "POST" && path === "/v1/auth/sign-out") {
                 await authService.signOut(auth.sessionId);
                 sendJson(response, 200, { ok: true });
+                return;
+            }
+
+            if (messagingService && request.method === "POST" && path === "/v1/conversations/direct") {
+                const body = await readJsonBody(request);
+                const result = await messagingService.createDirectConversation(auth.userId, body?.userId);
+                sendJson(response, result.created ? 201 : 200, result);
+                return;
+            }
+
+            if (messagingService && request.method === "GET" && path === "/v1/conversations") {
+                sendJson(response, 200, { conversations: await messagingService.listConversations(auth.userId) });
+                return;
+            }
+
+            const messagesMatch = /^\\/v1\\/conversations\\/([^/]+)\\/messages$/.exec(path);
+            if (messagingService && messagesMatch && request.method === "GET") {
+                const result = await messagingService.listMessages(
+                    auth.userId,
+                    messagesMatch[1],
+                    requestUrl.searchParams.get("before"),
+                    Number.parseInt(requestUrl.searchParams.get("limit") ?? "50", 10)
+                );
+                sendJson(response, 200, { messages: result });
+                return;
+            }
+
+            if (messagingService && messagesMatch && request.method === "POST") {
+                const body = await readJsonBody(request);
+                const result = await messagingService.sendMessage(auth.userId, messagesMatch[1], body);
+                sendJson(response, 201, result);
+                return;
+            }
+
+            const deleteMessageMatch = /^\\/v1\\/messages\\/([^/]+)$/.exec(path);
+            if (messagingService && deleteMessageMatch && request.method === "DELETE") {
+                const result = await messagingService.deleteOwnMessage(auth.userId, deleteMessageMatch[1]);
+                sendJson(response, 200, result);
                 return;
             }
 
@@ -175,7 +216,7 @@ export function createServer({ pool = getPool(), accessTokenSecret = process.env
 
             sendJson(response, 404, { error: "not_found" });
         } catch (error) {
-            if (error instanceof AuthError || error instanceof SocialError) {
+            if (error instanceof AuthError || error instanceof SocialError || error instanceof MessagingError) {
                 sendJson(response, error.status, { error: error.code });
                 return;
             }
