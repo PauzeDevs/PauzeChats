@@ -12,7 +12,7 @@ import org.matrix.rustcomponents.sdk.Client
 import org.matrix.rustcomponents.sdk.VerificationState
 
 /** Narrow seam around the SDK calls so repository behavior can be tested without native SDK state. */
-internal interface MatrixVerificationApi {
+interface MatrixVerificationApi {
     fun currentDeviceStatus(): DeviceVerificationStatus
 
     suspend fun requestCurrentDeviceVerification()
