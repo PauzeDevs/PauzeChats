@@ -120,7 +120,7 @@ export function createServer({ pool = getPool(), accessTokenSecret = process.env
                 return;
             }
 
-            const messagesMatch = /^\\/v1\\/conversations\\/([^/]+)\\/messages$/.exec(path);
+            const messagesMatch = /^\/v1\/conversations\/([^/]+)\/messages$/.exec(path);
             if (messagingService && messagesMatch && request.method === "GET") {
                 const result = await messagingService.listMessages(
                     auth.userId,
@@ -139,7 +139,7 @@ export function createServer({ pool = getPool(), accessTokenSecret = process.env
                 return;
             }
 
-            const deleteMessageMatch = /^\\/v1\\/messages\\/([^/]+)$/.exec(path);
+            const deleteMessageMatch = /^\/v1\/messages\/([^/]+)$/.exec(path);
             if (messagingService && deleteMessageMatch && request.method === "DELETE") {
                 const result = await messagingService.deleteOwnMessage(auth.userId, deleteMessageMatch[1]);
                 sendJson(response, 200, result);
