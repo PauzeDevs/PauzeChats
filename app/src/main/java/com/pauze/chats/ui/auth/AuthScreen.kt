@@ -105,7 +105,6 @@ fun AuthScreen(
     val rateLimitActive = state.rateLimitedMode == state.mode &&
         state.rateLimitSecondsRemaining > 0
     val formReady = !state.isBusy &&
-        state.isBackendConfigured &&
         !rateLimitActive &&
         normalizedEmail != null &&
         validPassword &&
@@ -224,25 +223,6 @@ fun AuthScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
-
-            if (!state.isBackendConfigured) {
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp),
-                    color = MaterialTheme.colorScheme.error.copy(alpha = 0.08f),
-                    border = BorderStroke(
-                        1.dp,
-                        MaterialTheme.colorScheme.error.copy(alpha = 0.28f)
-                    )
-                ) {
-                    Text(
-                        text = "This build isn't connected to the PauzeChats account service.",
-                        modifier = Modifier.padding(14.dp),
-                        color = MaterialTheme.colorScheme.onSurface,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-            }
 
             Spacer(Modifier.height(28.dp))
 
