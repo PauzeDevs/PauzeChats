@@ -1,3 +1,7 @@
+/*
+ * Copyright © 2026 Aarav Singh (Pauze). All rights reserved.
+ */
+
 package com.pauze.chats.account
 
 import com.pauze.chats.BuildConfig
@@ -7,6 +11,8 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.io.IOException
+import java.net.URI
+import java.util.concurrent.TimeUnit
 
 class AuthApiException(
     val errorCode: String,
@@ -14,17 +20,38 @@ class AuthApiException(
     val retryAfterSeconds: Long? = null
 ) : IOException(errorCode)
 
-class AuthApiClient(
-    private val baseUrl: String = BuildConfig.PAUZE_API_BASE_URL,
-    private val client: OkHttpClient = OkHttpClient()
-) {
-    private val jsonMediaType = "application/json; charset=utf-8".toMediaType()
+internal data class AuthHttpResponse(
+    val statusCode: Int,
+    val body: String,
+    val retryAfter: String? = null
+)
 
-    init {
-        require(baseUrl.isBlank() || baseUrl.startsWith("https://")) {
-            "PauzeChats API must use HTTPS"
-        }
-    }
+internal fun interface AuthRequestExecutor {
+    fun execute(request: Request): AuthHttpResponse
+}
+
+class AuthApiClient private constructor(
+    baseUrl: String,
+    private val client: OkHttpClient,
+    private val requestExecutor: AuthRequestExecutor?
+) {
+    constructor(
+        baseUrl: String = BuildConfig.PAUZE_API_BASE_URL,
+        client: OkHttpClient = OkHttpClient.Builder()
+            .callTimeout(30, TimeUnit.SECONDS)
+            .build()
+    ) : this(baseUrl, client, null)
+
+    internal constructor(
+        baseUrl: String,
+        requestExecutor: AuthRequestExecutor
+    ) : this(baseUrl, OkHttpClient(), requestExecutor)
+
+    private val normalizedBaseUrl = normalizeApiBaseUrl(baseUrl)
+    val isConfigured: Boolean
+        get() = normalizedBaseUrl.isNotBlank()
+
+    private val jsonMediaType = "application/json; charset=utf-8".toMediaType()
 
     fun signIn(credentials: AccountCredentials): AuthResult =
         post(
@@ -119,42 +146,64 @@ class AuthApiClient(
     }
 
     private fun execute(request: Request): String {
-        client.newCall(request).execute().use { response ->
-            val body = response.body?.string().orEmpty()
+        val result = requestExecutor?.execute(request) ?: client.newCall(request).execute().use {
+            AuthHttpResponse(
+                statusCode = it.code,
+                body = it.body?.string().orEmpty(),
+                retryAfter = it.header("Retry-After")
+            )
+        }
 
-            if (!response.isSuccessful) {
-                val errorCode = runCatching {
-                    JSONObject(body).optString("error")
-                }.getOrNull().orEmpty().ifBlank {
-                    "request_failed"
-                }
-
-                val retryAfterSeconds =
-                    response.header("Retry-After")
-                        ?.toLongOrNull()
-                        ?.takeIf { it > 0 }
-
-                throw AuthApiException(
-                    errorCode = errorCode,
-                    httpStatus = response.code,
-                    retryAfterSeconds = retryAfterSeconds
-                )
+        if (result.statusCode !in 200..299) {
+            val errorCode = runCatching {
+                JSONObject(result.body).optString("error")
+            }.getOrNull().orEmpty().ifBlank {
+                "request_failed"
             }
 
-            return body
+            val retryAfterSeconds = result.retryAfter
+                ?.toLongOrNull()
+                ?.takeIf { it > 0 }
+
+            throw AuthApiException(
+                errorCode = errorCode,
+                httpStatus = result.statusCode,
+                retryAfterSeconds = retryAfterSeconds
+            )
         }
+
+        return result.body
     }
 
     private fun url(path: String): String {
-        if (baseUrl.isBlank()) {
+        if (!isConfigured) {
             throw AuthApiException("api_not_configured", 503)
         }
 
-        return baseUrl.trimEnd('/') + path
+        return normalizedBaseUrl + path
     }
 
     data class AuthResult(
         val session: Session,
         val profile: UserProfile
     )
+}
+
+internal fun normalizeApiBaseUrl(baseUrl: String): String {
+    val normalized = baseUrl.trim().trimEnd('/')
+    if (normalized.isBlank()) return ""
+
+    val uri = runCatching { URI(normalized) }.getOrNull()
+    require(
+        uri != null &&
+            uri.scheme?.equals("https", ignoreCase = true) == true &&
+            !uri.host.isNullOrBlank() &&
+            uri.userInfo == null &&
+            uri.query == null &&
+            uri.fragment == null
+    ) {
+        "PauzeChats API base URL must be an HTTPS URL without credentials, query, or fragment"
+    }
+
+    return normalized
 }

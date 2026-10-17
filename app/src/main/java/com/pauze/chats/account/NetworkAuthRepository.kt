@@ -1,3 +1,7 @@
+/*
+ * Copyright © 2026 Aarav Singh (Pauze). All rights reserved.
+ */
+
 package com.pauze.chats.account
 
 import android.content.Context
@@ -8,6 +12,9 @@ class NetworkAuthRepository(
     context: Context,
     private val api: AuthApiClient = AuthApiClient()
 ) : AuthRepository {
+    override val isBackendConfigured: Boolean
+        get() = api.isConfigured
+
     private val sessionStore =
         EncryptedSessionStore(context.applicationContext)
 

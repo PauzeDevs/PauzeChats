@@ -35,10 +35,12 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -48,10 +50,14 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.pauze.chats.account.AccountValidation
+import java.util.Locale
 
 @Composable
 fun AuthScreen(
@@ -66,10 +72,13 @@ fun AuthScreen(
         displayName: String,
         bio: String,
         inviteCode: String
-    ) -> Unit
+    ) -> Unit,
+    onClearError: () -> Unit
 ) {
     var email by rememberSaveable { mutableStateOf("") }
-    var password by rememberSaveable { mutableStateOf("") }
+    // Passwords must not be copied into the saved-instance-state bundle.
+    var password by remember { mutableStateOf("") }
+    var showPassword by rememberSaveable { mutableStateOf(false) }
     var username by rememberSaveable { mutableStateOf("") }
     var displayName by rememberSaveable { mutableStateOf("") }
     var bio by rememberSaveable { mutableStateOf("") }
@@ -84,6 +93,28 @@ fun AuthScreen(
     }
 
     val isSignIn = state.mode == AuthMode.SIGN_IN
+    val normalizedEmail = AccountValidation.normalizeEmail(email)
+    val invalidEmail = email.isNotBlank() && normalizedEmail == null
+    val validUsername = AccountValidation.normalizeUsername(username) != null
+    val validInviteCode = inviteCode.trim().length in 16..256
+    val validPassword = if (isSignIn) {
+        password.isNotBlank() && password.length <= 128
+    } else {
+        AccountValidation.validatePassword(password)
+    }
+    val rateLimitActive = state.rateLimitedMode == state.mode &&
+        state.rateLimitSecondsRemaining > 0
+    val formReady = !state.isBusy &&
+        state.isBackendConfigured &&
+        !rateLimitActive &&
+        normalizedEmail != null &&
+        validPassword &&
+        (isSignIn || (
+            validUsername &&
+                validInviteCode &&
+                AccountValidation.validateDisplayName(displayName.ifBlank { null }) &&
+                AccountValidation.validateBio(bio)
+            ))
     val fieldColors = OutlinedTextFieldDefaults.colors(
         focusedBorderColor = MaterialTheme.colorScheme.primary,
         unfocusedBorderColor = MaterialTheme.colorScheme.outline,
@@ -194,6 +225,25 @@ fun AuthScreen(
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
 
+            if (!state.isBackendConfigured) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp),
+                    color = MaterialTheme.colorScheme.error.copy(alpha = 0.08f),
+                    border = BorderStroke(
+                        1.dp,
+                        MaterialTheme.colorScheme.error.copy(alpha = 0.28f)
+                    )
+                ) {
+                    Text(
+                        text = "This build isn't connected to the PauzeChats account service.",
+                        modifier = Modifier.padding(14.dp),
+                        color = MaterialTheme.colorScheme.onSurface,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+
             Spacer(Modifier.height(28.dp))
 
             Card(
@@ -252,37 +302,79 @@ fun AuthScreen(
 
                     OutlinedTextField(
                         value = email,
-                        onValueChange = { email = it },
+                        onValueChange = {
+                            email = it.take(254)
+                            onClearError()
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         label = { Text("Email address") },
                         placeholder = { Text("you@example.com") },
                         singleLine = true,
+                        isError = invalidEmail,
+                        supportingText = {
+                            if (invalidEmail) Text("Enter a valid email address.")
+                        },
                         shape = RoundedCornerShape(15.dp),
                         colors = fieldColors,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Email,
+                            imeAction = ImeAction.Next
+                        )
                     )
 
                     OutlinedTextField(
                         value = password,
-                        onValueChange = { password = it },
+                        onValueChange = {
+                            password = it.take(128)
+                            onClearError()
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         label = { Text("Password") },
                         placeholder = { Text("Enter your password") },
                         singleLine = true,
+                        supportingText = if (!isSignIn) {
+                            { Text("At least 12 characters, including a letter and a number.") }
+                        } else {
+                            null
+                        },
                         shape = RoundedCornerShape(15.dp),
                         colors = fieldColors,
-                        visualTransformation = PasswordVisualTransformation(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                        visualTransformation = if (showPassword) {
+                            VisualTransformation.None
+                        } else {
+                            PasswordVisualTransformation()
+                        },
+                        trailingIcon = {
+                            TextButton(onClick = { showPassword = !showPassword }) {
+                                Text(if (showPassword) "Hide" else "Show")
+                            }
+                        },
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Done
+                        )
                     )
 
                     if (!isSignIn) {
                         OutlinedTextField(
                             value = username,
-                            onValueChange = { username = it },
+                            onValueChange = {
+                                username = it.lowercase(Locale.ROOT).take(24)
+                                onClearError()
+                            },
                             modifier = Modifier.fillMaxWidth(),
                             label = { Text("Username") },
                             placeholder = { Text("your_username") },
-                            supportingText = { Text("3–24 lowercase letters, numbers, or _") },
+                            isError = username.isNotBlank() && !validUsername,
+                            supportingText = {
+                                Text(
+                                    if (username.isNotBlank() && !validUsername) {
+                                        "Use 3–24 lowercase letters, numbers, or _."
+                                    } else {
+                                        "3–24 lowercase letters, numbers, or _"
+                                    }
+                                )
+                            },
                             singleLine = true,
                             shape = RoundedCornerShape(15.dp),
                             colors = fieldColors
@@ -290,7 +382,10 @@ fun AuthScreen(
 
                         OutlinedTextField(
                             value = displayName,
-                            onValueChange = { displayName = it },
+                            onValueChange = {
+                                displayName = it.take(40)
+                                onClearError()
+                            },
                             modifier = Modifier.fillMaxWidth(),
                             label = { Text("Display name (optional)") },
                             singleLine = true,
@@ -300,7 +395,10 @@ fun AuthScreen(
 
                         OutlinedTextField(
                             value = bio,
-                            onValueChange = { bio = it.take(200) },
+                            onValueChange = {
+                                bio = it.take(200)
+                                onClearError()
+                            },
                             modifier = Modifier.fillMaxWidth(),
                             label = { Text("A little about you (optional)") },
                             placeholder = { Text("Your bio") },
@@ -312,11 +410,23 @@ fun AuthScreen(
 
                         OutlinedTextField(
                             value = inviteCode,
-                            onValueChange = { inviteCode = it },
+                            onValueChange = {
+                                inviteCode = it.take(256)
+                                onClearError()
+                            },
                             modifier = Modifier.fillMaxWidth(),
                             label = { Text("Invite code") },
                             placeholder = { Text("Enter your invite code") },
-                            supportingText = { Text("Only invited members can create an account.") },
+                            isError = inviteCode.isNotBlank() && !validInviteCode,
+                            supportingText = {
+                                Text(
+                                    if (inviteCode.isNotBlank() && !validInviteCode) {
+                                        "Invite codes must be between 16 and 256 characters."
+                                    } else {
+                                        "Only invited members can create an account."
+                                    }
+                                )
+                            },
                             singleLine = true,
                             shape = RoundedCornerShape(15.dp),
                             colors = fieldColors
@@ -365,10 +475,7 @@ fun AuthScreen(
                             containerColor = MaterialTheme.colorScheme.primary,
                             contentColor = MaterialTheme.colorScheme.onPrimary
                         ),
-                        enabled = !state.isBusy &&
-                            email.isNotBlank() &&
-                            password.isNotBlank() &&
-                            (isSignIn || (username.isNotBlank() && inviteCode.isNotBlank()))
+                        enabled = formReady
                     ) {
                         if (state.isBusy) {
                             CircularProgressIndicator(
@@ -378,7 +485,12 @@ fun AuthScreen(
                             )
                         } else {
                             Text(
-                                text = if (isSignIn) "Sign in securely" else "Create account",
+                                text = when {
+                                    rateLimitActive ->
+                                        "Try again in " + formatRetryTime(state.rateLimitSecondsRemaining)
+                                    isSignIn -> "Sign in securely"
+                                    else -> "Create account"
+                                },
                                 fontWeight = FontWeight.Bold,
                                 style = MaterialTheme.typography.labelLarge
                             )
@@ -445,5 +557,15 @@ private fun AuthModeOption(
             style = MaterialTheme.typography.labelLarge,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
         )
+    }
+}
+
+private fun formatRetryTime(seconds: Long): String {
+    val minutes = seconds / 60
+    val remainingSeconds = seconds % 60
+    return if (minutes > 0) {
+        "%d:%02d".format(minutes, remainingSeconds)
+    } else {
+        remainingSeconds.toString() + "s"
     }
 }

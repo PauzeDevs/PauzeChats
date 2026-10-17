@@ -7,8 +7,28 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
-val apiBaseUrl = providers.gradleProperty("pauzeApiBaseUrl").orNull ?: ""
+val apiBaseUrl = (
+    providers.gradleProperty("pauzeApiBaseUrl").orNull
+        ?: providers.environmentVariable("PAUZE_API_BASE_URL").orNull
+        ?: ""
+    ).trim().trimEnd('/')
 val matrixHomeserverUrl = providers.gradleProperty("pauzeMatrixHomeserverUrl").orNull ?: ""
+
+val parsedApiBaseUrl = runCatching { java.net.URI(apiBaseUrl) }.getOrNull()
+require(
+    apiBaseUrl.isBlank() || (
+        parsedApiBaseUrl?.scheme?.equals("https", ignoreCase = true) == true &&
+            !parsedApiBaseUrl?.host.isNullOrBlank() &&
+            parsedApiBaseUrl?.userInfo == null &&
+            parsedApiBaseUrl?.query == null &&
+            parsedApiBaseUrl?.fragment == null
+        )
+) {
+    "PauzeChats API base URL must be an HTTPS URL without credentials, query, or fragment"
+}
+
+val apiBaseUrlBuildConfigValue =
+    "\"" + apiBaseUrl.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
 
 android {
     namespace = "com.pauze.chats"
@@ -20,7 +40,7 @@ android {
 
     defaultConfig {
         applicationId = "com.pauze.chats"
-        buildConfigField("String", "PAUZE_API_BASE_URL", "\"$apiBaseUrl\"")
+        buildConfigField("String", "PAUZE_API_BASE_URL", apiBaseUrlBuildConfigValue)
         buildConfigField("String", "PAUZE_MATRIX_HOMESERVER_URL", "\"$matrixHomeserverUrl\"")
         minSdk = 26
         targetSdk = 37
