@@ -28,7 +28,9 @@ class MatrixConversationRepository(
                             title = room.displayName() ?: "Conversation",
                             isDirect = room.isDirect(),
                             unreadCount = 0,
-                            encryptionStatus = room.isEncrypted().toRoomEncryptionStatus()
+                            encryptionStatus = runCatching { room.isEncrypted() }
+                                .getOrNull()
+                                .toRoomEncryptionStatus()
                         )
                     }
                     .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.title })
@@ -36,5 +38,9 @@ class MatrixConversationRepository(
         }
 }
 
-internal fun Boolean.toRoomEncryptionStatus(): RoomEncryptionStatus =
-    if (this) RoomEncryptionStatus.ENCRYPTED else RoomEncryptionStatus.NOT_ENCRYPTED
+internal fun Boolean?.toRoomEncryptionStatus(): RoomEncryptionStatus =
+    when (this) {
+        true -> RoomEncryptionStatus.ENCRYPTED
+        false -> RoomEncryptionStatus.NOT_ENCRYPTED
+        null -> RoomEncryptionStatus.UNKNOWN
+    }
