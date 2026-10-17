@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.pauze.chats.messaging.ConversationSummary
+import com.pauze.chats.messaging.RoomEncryptionStatus
 
 @Composable
 fun ChatsScreen(
@@ -95,9 +96,24 @@ private fun ConversationRow(
             Text(conversation.title)
         },
         supportingContent = {
-            Text(
-                if (conversation.isDirect) "Direct message" else "Group conversation"
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    if (conversation.isDirect) "Direct message" else "Group conversation"
+                )
+                Text(
+                    text = when (conversation.encryptionStatus) {
+                        RoomEncryptionStatus.ENCRYPTED -> "Matrix reports encryption enabled"
+                        RoomEncryptionStatus.NOT_ENCRYPTED -> "Not encrypted"
+                        RoomEncryptionStatus.UNKNOWN -> "Encryption status unknown"
+                    },
+                    color = if (conversation.encryptionStatus == RoomEncryptionStatus.NOT_ENCRYPTED) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
         },
         trailingContent = {
             if (conversation.unreadCount > 0) {

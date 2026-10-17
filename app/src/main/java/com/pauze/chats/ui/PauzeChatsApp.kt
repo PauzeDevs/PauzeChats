@@ -38,6 +38,7 @@ import com.pauze.chats.ui.chat.ChatsViewModel
 import com.pauze.chats.ui.auth.AuthViewModel
 import com.pauze.chats.ui.social.FriendsScreen
 import com.pauze.chats.ui.social.ProfileSettingsScreen
+import com.pauze.chats.ui.social.DeviceVerificationViewModel
 import com.pauze.chats.ui.social.SocialViewModel
 import com.pauze.chats.ui.theme.PauzeChatsTheme
 
@@ -83,7 +84,8 @@ private fun AuthenticatedApp(
             application.authRepository,
             application.messagingSession,
             application.conversationRepository,
-            application.messagingSyncController
+            application.messagingSyncController,
+            application.deviceVerificationRepository
         )
     )
     val chatsState by chatsViewModel.state.collectAsStateWithLifecycle()
@@ -92,6 +94,14 @@ private fun AuthenticatedApp(
         factory = SocialViewModel.Factory(application.socialRepository)
     )
     val socialState by socialViewModel.state.collectAsStateWithLifecycle()
+
+    val deviceVerificationViewModel: DeviceVerificationViewModel = viewModel(
+        factory = DeviceVerificationViewModel.Factory(
+            application.deviceVerificationRepository
+        )
+    )
+    val deviceVerificationState by
+        deviceVerificationViewModel.state.collectAsStateWithLifecycle()
 
     if (selectedConversation != null) {
         val conversation = selectedConversation!!
@@ -112,11 +122,18 @@ private fun AuthenticatedApp(
         onRefreshChats = chatsViewModel::refresh,
         onConversationClick = { selectedConversation = it },
         socialState = socialState,
+        deviceVerificationState = deviceVerificationState,
         onRefreshSocial = socialViewModel::refresh,
         onLookup = socialViewModel::lookup,
         onSendFriendRequest = socialViewModel::sendFriendRequest,
         onRespondToRequest = socialViewModel::respondToRequest,
         onSaveProfile = socialViewModel::saveProfile,
+        onRequestVerification = deviceVerificationViewModel::requestVerification,
+        onAcceptVerification = deviceVerificationViewModel::acceptRequest,
+        onStartSasVerification = deviceVerificationViewModel::startSasVerification,
+        onConfirmSasMatches = deviceVerificationViewModel::confirmSasMatches,
+        onDeclineVerification = deviceVerificationViewModel::declineRequest,
+        onCancelVerification = deviceVerificationViewModel::cancelVerification,
         onSignOut = authViewModel::signOut
     )
 }
@@ -128,11 +145,18 @@ private fun AuthenticatedNavigation(
     onRefreshChats: () -> Unit,
     onConversationClick: (ConversationSummary) -> Unit,
     socialState: com.pauze.chats.ui.social.SocialUiState,
+    deviceVerificationState: com.pauze.chats.messaging.DeviceVerificationFlowState,
     onRefreshSocial: () -> Unit,
     onLookup: (String) -> Unit,
     onSendFriendRequest: (String) -> Unit,
     onRespondToRequest: (String, String) -> Unit,
     onSaveProfile: (String, String) -> Unit,
+    onRequestVerification: () -> Unit,
+    onAcceptVerification: () -> Unit,
+    onStartSasVerification: () -> Unit,
+    onConfirmSasMatches: () -> Unit,
+    onDeclineVerification: () -> Unit,
+    onCancelVerification: () -> Unit,
     onSignOut: () -> Unit
 ) {
     var selectedTab by androidx.compose.runtime.remember {
@@ -192,7 +216,14 @@ private fun AuthenticatedNavigation(
             )
             else -> ProfileSettingsScreen(
                 state = socialState,
+                verificationState = deviceVerificationState,
                 onSave = onSaveProfile,
+                onRequestVerification = onRequestVerification,
+                onAcceptVerification = onAcceptVerification,
+                onStartSasVerification = onStartSasVerification,
+                onConfirmSasMatches = onConfirmSasMatches,
+                onDeclineVerification = onDeclineVerification,
+                onCancelVerification = onCancelVerification,
                 onSignOut = onSignOut
             )
         }

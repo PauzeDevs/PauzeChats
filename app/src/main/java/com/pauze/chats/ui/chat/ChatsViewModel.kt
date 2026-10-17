@@ -10,6 +10,7 @@ import androidx.lifecycle.viewModelScope
 import com.pauze.chats.BuildConfig
 import com.pauze.chats.account.AuthRepository
 import com.pauze.chats.messaging.MessagingSessionConfig
+import com.pauze.chats.messaging.DeviceVerificationRepository
 import com.pauze.chats.messaging.matrix.MatrixConversationRepository
 import com.pauze.chats.messaging.matrix.MatrixMessagingSession
 import com.pauze.chats.messaging.matrix.MatrixMessagingSyncController
@@ -28,7 +29,8 @@ class ChatsViewModel(
     private val authRepository: AuthRepository,
     private val messagingSession: MatrixMessagingSession,
     private val conversationRepository: MatrixConversationRepository,
-    private val messagingSyncController: MatrixMessagingSyncController
+    private val messagingSyncController: MatrixMessagingSyncController,
+    private val deviceVerificationRepository: DeviceVerificationRepository
 ) : ViewModel() {
     private val _state = MutableStateFlow(ChatsUiState())
     val state: StateFlow<ChatsUiState> = _state.asStateFlow()
@@ -66,6 +68,7 @@ class ChatsViewModel(
                 )
             ).fold(
                 onSuccess = {
+                    deviceVerificationRepository.attach()
                     messagingSyncController.start().fold(
                         onSuccess = {
                             conversationRepository.listConversations().fold(
@@ -109,7 +112,8 @@ class ChatsViewModel(
         private val authRepository: AuthRepository,
         private val messagingSession: MatrixMessagingSession,
         private val conversationRepository: MatrixConversationRepository,
-        private val messagingSyncController: MatrixMessagingSyncController
+        private val messagingSyncController: MatrixMessagingSyncController,
+        private val deviceVerificationRepository: DeviceVerificationRepository
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -118,7 +122,8 @@ class ChatsViewModel(
                 authRepository,
                 messagingSession,
                 conversationRepository,
-                messagingSyncController
+                messagingSyncController,
+                deviceVerificationRepository
             ) as T
         }
     }

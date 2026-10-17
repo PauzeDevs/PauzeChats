@@ -5,11 +5,13 @@
 package com.pauze.chats
 
 import android.app.Application
+import org.matrix.rustcomponents.sdk.Client
 import com.pauze.chats.account.NetworkAuthRepository
 import com.pauze.chats.account.NetworkSocialRepository
 import com.pauze.chats.messaging.matrix.MatrixAuthApiClient
 import com.pauze.chats.messaging.matrix.MatrixConversationRepository
 import com.pauze.chats.messaging.matrix.MatrixDeviceVerificationRepository
+import com.pauze.chats.messaging.matrix.MatrixVerificationApi
 import com.pauze.chats.messaging.matrix.SdkMatrixVerificationApi
 import com.pauze.chats.messaging.matrix.MatrixMessagingSession
 import com.pauze.chats.messaging.matrix.MatrixMessagingSyncController
@@ -59,8 +61,16 @@ class PauzeChatsApplication : Application() {
         messagingSyncController = MatrixMessagingSyncController {
             messagingSession.clientOrNull()
         }
+        var verificationClient: Client? = null
+        var verificationApi: MatrixVerificationApi? = null
         deviceVerificationRepository = MatrixDeviceVerificationRepository {
-            messagingSession.clientOrNull()?.let(::SdkMatrixVerificationApi)
+            messagingSession.clientOrNull()?.let { client ->
+                if (client !== verificationClient) {
+                    verificationClient = client
+                    verificationApi = SdkMatrixVerificationApi(client)
+                }
+                verificationApi
+            }
         }
     }
 }
