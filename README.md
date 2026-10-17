@@ -89,9 +89,10 @@ the example host below with the deployed PauzeChats API URL:
 PAUZE_API_BASE_URL=https://api.example.com gradle --no-daemon :app:assembleDebug
 ```
 
-When neither setting is present, sign-in and registration stay disabled and the
-login screen explains that this build is not connected. The client rejects
-cleartext HTTP URLs.
+When neither setting is present, the login screen stays interactive and
+explains that the account service address is missing. Submitting credentials
+then shows a configuration error; authentication requires the deployed backend.
+The client rejects cleartext HTTP URLs.
 
 ## Architecture
 
