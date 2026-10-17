@@ -2,6 +2,8 @@
  * Copyright © 2026 Aarav Singh (Pauze). All rights reserved.
  */
 
+import java.net.URI
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.plugin.compose")
@@ -14,7 +16,7 @@ val apiBaseUrl = (
     ).trim().trimEnd('/')
 val matrixHomeserverUrl = providers.gradleProperty("pauzeMatrixHomeserverUrl").orNull ?: ""
 
-val parsedApiBaseUrl = runCatching { java.net.URI(apiBaseUrl) }.getOrNull()
+val parsedApiBaseUrl = runCatching { URI(apiBaseUrl) }.getOrNull()
 require(
     apiBaseUrl.isBlank() || (
         parsedApiBaseUrl?.scheme?.equals("https", ignoreCase = true) == true &&
