@@ -13,26 +13,26 @@ import kotlin.test.assertTrue
 class AuthApiClientConfigTest {
     @Test
     fun blankApiUrlIsReportedAsUnconfigured() {
-        assertFalse(AuthApiClient(\"\").isConfigured)
+        assertFalse(AuthApiClient("").isConfigured)
     }
 
     @Test
     fun normalizesHttpsApiBaseUrl() {
         assertEquals(
-            \"https://api.example.com/pauze\",
-            normalizeApiBaseUrl(\"  https://api.example.com/pauze/  \")
+            "https://api.example.com/pauze",
+            normalizeApiBaseUrl("  https://api.example.com/pauze/  ")
         )
-        assertTrue(AuthApiClient(\"https://api.example.com\").isConfigured)
+        assertTrue(AuthApiClient("https://api.example.com").isConfigured)
     }
 
     @Test
     fun rejectsInsecureOrAmbiguousApiUrls() {
         listOf(
-            \"http://api.example.com\",
-            \"https://user:password@api.example.com\",
-            \"https://api.example.com?access_token=secret\",
-            \"https://api.example.com#fragment\",
-            \"https://\"
+            "http://api.example.com",
+            "https://user:password@api.example.com",
+            "https://api.example.com?access_token=secret",
+            "https://api.example.com#fragment",
+            "https://"
         ).forEach { url ->
             assertFailsWith<IllegalArgumentException> {
                 normalizeApiBaseUrl(url)
