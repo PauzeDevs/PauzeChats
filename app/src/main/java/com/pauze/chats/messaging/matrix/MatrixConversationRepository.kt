@@ -4,6 +4,8 @@
 
 package com.pauze.chats.messaging.matrix
 
+import android.net.Uri
+import com.pauze.chats.BuildConfig
 import com.pauze.chats.messaging.ConversationId
 import com.pauze.chats.messaging.ConversationRepository
 import com.pauze.chats.messaging.ConversationSummary
@@ -26,10 +28,33 @@ class MatrixConversationRepository(
                             id = ConversationId(room.id()),
                             title = room.displayName() ?: "Conversation",
                             isDirect = room.isDirect(),
-                            unreadCount = 0
+                            unreadCount = 0,
+                            avatarUrl = mediaDownloadUrl(room.avatarUrl())
                         )
                     }
                     .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.title })
             }
         }
+
+    /**
+     * Convert an MXC URI to the authenticated user's homeserver media endpoint
+     * so Coil can load static or animated profile/room avatars.
+     */
+    private fun mediaDownloadUrl(mxcUrl: String?): String? {
+        if (mxcUrl.isNullOrBlank()) return null
+
+        val parsed = Uri.parse(mxcUrl)
+        if (parsed.scheme != "mxc") {
+            return mxcUrl.takeIf { it.startsWith("https://") }
+        }
+
+        val serverName = parsed.host ?: return null
+        val mediaId = parsed.pathSegments.singleOrNull() ?: return null
+        val homeserver = BuildConfig.PAUZE_MATRIX_HOMESERVER_URL
+            .trimEnd('/')
+            .takeIf(String::isNotBlank) ?: return null
+
+        return homeserver + "/_matrix/client/v1/media/download/" +
+            Uri.encode(serverName) + "/" + Uri.encode(mediaId)
+    }
 }
