@@ -36,6 +36,8 @@ import androidx.compose.ui.unit.dp
 import com.pauze.chats.messaging.MessageSummary
 import com.pauze.chats.ui.components.ChatSticker
 import com.pauze.chats.ui.components.StickerPicker
+import java.text.DateFormat
+import java.util.Date
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -207,6 +209,13 @@ private fun MessageBubble(message: MessageSummary) {
                     message.bodyPreview,
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = DateFormat.getTimeInstance(DateFormat.SHORT)
+                        .format(Date(message.sentAtEpochSeconds * 1_000L)),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.align(Alignment.End)
                 )
             }
         }
