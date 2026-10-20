@@ -83,6 +83,19 @@ class ChatDetailViewModelTest {
         assertEquals("please retry", viewModel.state.value.draft)
         assertEquals("offline", viewModel.state.value.message)
         assertFalse(viewModel.state.value.isSending)
+
+        repository.messages.value = listOf(
+            MessageSummary(
+                id = MessageId("event-after-error"),
+                conversationId = ConversationId("!room:example.org"),
+                senderName = "Friend",
+                bodyPreview = "Another message arrived",
+                sentAtEpochSeconds = 1_800_000_001L
+            )
+        )
+        runCurrent()
+
+        assertEquals("offline", viewModel.state.value.message)
     }
 
     @Test
