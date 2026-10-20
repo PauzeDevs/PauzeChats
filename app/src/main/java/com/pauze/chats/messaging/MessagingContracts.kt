@@ -4,6 +4,8 @@
 
 package com.pauze.chats.messaging
 
+import kotlinx.coroutines.flow.Flow
+
 data class ConversationId(val value: String)
 
 data class ConversationSummary(
@@ -41,7 +43,8 @@ interface ConversationRepository {
 }
 
 interface MessageRepository {
-    suspend fun listRecentMessages(conversationId: ConversationId): Result<List<MessageSummary>>
+    fun observeMessages(conversationId: ConversationId): Flow<List<MessageSummary>>
+    suspend fun sendText(conversationId: ConversationId, body: String): Result<Unit>
 }
 
 interface MessagingSyncController {
