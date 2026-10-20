@@ -132,8 +132,8 @@ class MatrixMessageRepository(
         val stableId = uniqueId().id
         val event = asEvent() ?: return@itemUse null
         event.use eventUse@{
-            val content = content
-            content.use contentUse@{
+            val eventContent = event.content
+            eventContent.use contentUse@{
                 val messageLike = it as? TimelineItemContent.MsgLike ?: return@contentUse null
                 val message = messageLike.content.kind as? MsgLikeKind.Message
                     ?: return@contentUse null
