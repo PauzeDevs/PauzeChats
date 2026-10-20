@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.pauze.chats.messaging.ConversationSummary
+import com.pauze.chats.ui.components.AnimatedAvatar
 
 @Composable
 fun ChatsScreen(
@@ -48,16 +49,11 @@ fun ChatsScreen(
 
         state.conversations.isEmpty() -> {
             Column(
-                modifier = modifier
-                    .fillMaxSize()
-                    .padding(24.dp),
+                modifier = modifier.fillMaxSize().padding(24.dp),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = "No conversations yet",
-                    style = MaterialTheme.typography.headlineSmall
-                )
+                Text("No conversations yet", style = MaterialTheme.typography.headlineSmall)
                 Text(
                     text = state.message ?: "Add a friend to start a private chat.",
                     style = MaterialTheme.typography.bodyMedium,
@@ -71,14 +67,8 @@ fun ChatsScreen(
                 modifier = modifier.fillMaxSize(),
                 contentPadding = PaddingValues(vertical = 8.dp)
             ) {
-                items(
-                    items = state.conversations,
-                    key = { it.id.value }
-                ) { conversation ->
-                    ConversationRow(
-                        conversation = conversation,
-                        onClick = { onConversationClick(conversation) }
-                    )
+                items(state.conversations, key = { it.id.value }) { conversation ->
+                    ConversationRow(conversation) { onConversationClick(conversation) }
                 }
             }
         }
@@ -86,18 +76,18 @@ fun ChatsScreen(
 }
 
 @Composable
-private fun ConversationRow(
-    conversation: ConversationSummary,
-    onClick: () -> Unit
-) {
+private fun ConversationRow(conversation: ConversationSummary, onClick: () -> Unit) {
     ListItem(
-        headlineContent = {
-            Text(conversation.title)
-        },
-        supportingContent = {
-            Text(
-                if (conversation.isDirect) "Direct message" else "Group conversation"
+        leadingContent = {
+            AnimatedAvatar(
+                imageUrl = conversation.avatarUrl,
+                displayName = conversation.title,
+                size = 48.dp
             )
+        },
+        headlineContent = { Text(conversation.title) },
+        supportingContent = {
+            Text(if (conversation.isDirect) "Direct message" else "Group conversation")
         },
         trailingContent = {
             if (conversation.unreadCount > 0) {
@@ -107,8 +97,6 @@ private fun ConversationRow(
                 )
             }
         },
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)
     )
 }
