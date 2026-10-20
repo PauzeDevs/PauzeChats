@@ -156,7 +156,7 @@ class MatrixMessageRepository(
                         conversationId = conversationId,
                         senderName = senderName,
                         bodyPreview = message.content.body,
-                        sentAtEpochSeconds = eventItem.timestamp.toLong(),
+                        sentAtEpochSeconds = eventItem.timestamp.toLong() / 1_000L,
                         isOwn = eventItem.isOwn
                     )
                 }
