@@ -15,6 +15,7 @@ import com.pauze.chats.messaging.matrix.MatrixVerificationApi
 import com.pauze.chats.messaging.matrix.SdkMatrixVerificationApi
 import com.pauze.chats.messaging.matrix.MatrixMessagingSession
 import com.pauze.chats.messaging.matrix.MatrixMessagingSyncController
+import com.pauze.chats.messaging.matrix.MatrixMessageRepository
 import com.pauze.chats.messaging.matrix.MatrixSdkClientFactory
 import com.pauze.chats.messaging.matrix.MatrixSdkPlatform
 import com.pauze.chats.messaging.matrix.MatrixSessionStore
@@ -33,6 +34,9 @@ class PauzeChatsApplication : Application() {
         private set
 
     lateinit var messagingSyncController: MatrixMessagingSyncController
+        private set
+
+    lateinit var messageRepository: MatrixMessageRepository
         private set
 
     lateinit var deviceVerificationRepository: MatrixDeviceVerificationRepository
@@ -59,6 +63,9 @@ class PauzeChatsApplication : Application() {
             messagingSession.clientOrNull()
         }
         messagingSyncController = MatrixMessagingSyncController {
+            messagingSession.clientOrNull()
+        }
+        messageRepository = MatrixMessageRepository {
             messagingSession.clientOrNull()
         }
         var verificationClient: Client? = null
