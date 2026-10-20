@@ -4,6 +4,7 @@
 
 package com.pauze.chats.messaging
 
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
 data class ConversationId(
@@ -15,7 +16,8 @@ data class ConversationSummary(
     val title: String,
     val isDirect: Boolean,
     val unreadCount: Int,
-    val encryptionStatus: RoomEncryptionStatus = RoomEncryptionStatus.UNKNOWN
+    val encryptionStatus: RoomEncryptionStatus = RoomEncryptionStatus.UNKNOWN,
+    val avatarUrl: String? = null
 )
 
 enum class RoomEncryptionStatus {
@@ -68,7 +70,8 @@ data class MessageSummary(
     val conversationId: ConversationId,
     val senderName: String,
     val bodyPreview: String,
-    val sentAtEpochSeconds: Long
+    val sentAtEpochSeconds: Long,
+    val isOwn: Boolean = false
 )
 
 data class MessagingSessionConfig(
@@ -90,9 +93,8 @@ interface ConversationRepository {
 }
 
 interface MessageRepository {
-    suspend fun listRecentMessages(
-        conversationId: ConversationId
-    ): Result<List<MessageSummary>>
+    fun observeMessages(conversationId: ConversationId): Flow<List<MessageSummary>>
+    suspend fun sendText(conversationId: ConversationId, body: String): Result<Unit>
 }
 
 interface MessagingSyncController {
