@@ -17,7 +17,6 @@ import kotlinx.coroutines.withContext
 import org.matrix.rustcomponents.sdk.Client
 import org.matrix.rustcomponents.sdk.MessageContent
 import org.matrix.rustcomponents.sdk.MessageType
-import org.matrix.rustcomponents.sdk.MsgLikeContent
 import org.matrix.rustcomponents.sdk.MsgLikeKind
 import org.matrix.rustcomponents.sdk.TaskHandle
 import org.matrix.rustcomponents.sdk.TextMessageContent
@@ -25,6 +24,7 @@ import org.matrix.rustcomponents.sdk.TimelineDiff
 import org.matrix.rustcomponents.sdk.TimelineItem
 import org.matrix.rustcomponents.sdk.TimelineItemContent
 import org.matrix.rustcomponents.sdk.TimelineListener
+import org.matrix.rustcomponents.sdk.contentWithoutRelationFromMessage
 import org.matrix.rustcomponents.sdk.use
 
 /**
@@ -96,7 +96,7 @@ class MatrixMessageRepository(
 
             room.use { activeRoom ->
                 activeRoom.timeline().use { timeline ->
-                    timeline.send(textMessageContent(cleanBody))
+                    timeline.send(contentWithoutRelationFromMessage(textMessageContent(cleanBody)))
                 }
             }
             Unit
@@ -163,22 +163,13 @@ class MatrixMessageRepository(
             }
         }
 
-    private fun textMessageContent(body: String): TimelineItemContent =
-        TimelineItemContent.MsgLike(
-            content = MsgLikeContent(
-                kind = MsgLikeKind.Message(
-                    content = MessageContent(
-                        msgType = MessageType.Text(
-                            content = TextMessageContent(body = body, formatted = null)
-                        ),
-                        body = body,
-                        isEdited = false,
-                        mentions = null
-                    )
-                ),
-                threadRoot = null,
-                inReplyTo = null,
-                threadSummary = null
-            )
+    private fun textMessageContent(body: String): MessageContent =
+        MessageContent(
+            msgType = MessageType.Text(
+                content = TextMessageContent(body = body, formatted = null)
+            ),
+            body = body,
+            isEdited = false,
+            mentions = null
         )
 }
