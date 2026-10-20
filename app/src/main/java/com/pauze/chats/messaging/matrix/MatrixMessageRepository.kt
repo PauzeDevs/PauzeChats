@@ -135,17 +135,17 @@ class MatrixMessageRepository(
     }
 
     private fun TimelineItem.toSummary(conversationId: ConversationId): MessageSummary? =
-        use itemUse@{
-            val stableId = uniqueId().id
-            val event = asEvent() ?: return@itemUse null
-            event.use {
-                val eventContent = event.content
-                eventContent.use contentUse@{
-                    val messageLike = it as? TimelineItemContent.MsgLike
+        use itemUse@{ item ->
+            val stableId = item.uniqueId().id
+            val event = item.asEvent() ?: return@itemUse null
+            event.use eventUse@{ eventItem ->
+                val eventContent = eventItem.content
+                eventContent.use contentUse@{ content ->
+                    val messageLike = content as? TimelineItemContent.MsgLike
                         ?: return@contentUse null
                     val message = messageLike.content.kind as? MsgLikeKind.Message
                         ?: return@contentUse null
-                    val senderId = event.sender
+                    val senderId = eventItem.sender
                     val senderName = senderId
                         .substringAfter('@')
                         .substringBefore(':')
@@ -156,8 +156,8 @@ class MatrixMessageRepository(
                         conversationId = conversationId,
                         senderName = senderName,
                         bodyPreview = message.content.body,
-                        sentAtEpochSeconds = event.timestamp.toLong(),
-                        isOwn = event.isOwn
+                        sentAtEpochSeconds = eventItem.timestamp.toLong(),
+                        isOwn = eventItem.isOwn
                     )
                 }
             }
