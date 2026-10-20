@@ -23,7 +23,8 @@ data class MessageSummary(
     val conversationId: ConversationId,
     val senderName: String,
     val bodyPreview: String,
-    val sentAtEpochSeconds: Long
+    val sentAtEpochSeconds: Long,
+    val isOwn: Boolean = false
 )
 
 data class MessagingSessionConfig(
