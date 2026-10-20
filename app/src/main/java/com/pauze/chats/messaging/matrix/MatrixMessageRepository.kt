@@ -144,7 +144,8 @@ class MatrixMessageRepository(
                     conversationId = conversationId,
                     senderName = senderName,
                     bodyPreview = message.content.body,
-                    sentAtEpochSeconds = event.timestamp.toLong()
+                    sentAtEpochSeconds = event.timestamp.toLong(),
+                    isOwn = event.isOwn
                 )
             }
         }
