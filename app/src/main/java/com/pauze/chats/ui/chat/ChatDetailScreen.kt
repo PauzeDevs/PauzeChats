@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -29,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
@@ -51,6 +53,13 @@ fun ChatDetailScreen(
     onStickerSelected: (ChatSticker) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val messageListState = rememberLazyListState()
+    LaunchedEffect(state.messages.size) {
+        if (state.messages.isNotEmpty()) {
+            messageListState.animateScrollToItem(state.messages.lastIndex)
+        }
+    }
+
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -162,6 +171,7 @@ fun ChatDetailScreen(
 
             else -> {
                 LazyColumn(
+                    state = messageListState,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(padding),
