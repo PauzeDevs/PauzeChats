@@ -4,20 +4,17 @@
 
 package com.pauze.chats.messaging
 
-data class ConversationId(
-    val value: String
-)
+data class ConversationId(val value: String)
 
 data class ConversationSummary(
     val id: ConversationId,
     val title: String,
     val isDirect: Boolean,
-    val unreadCount: Int
+    val unreadCount: Int,
+    val avatarUrl: String? = null
 )
 
-data class MessageId(
-    val value: String
-)
+data class MessageId(val value: String)
 
 data class MessageSummary(
     val id: MessageId,
@@ -35,9 +32,7 @@ data class MessagingSessionConfig(
 
 interface MessagingSession {
     val isInitialized: Boolean
-
     suspend fun initialize(config: MessagingSessionConfig): Result<Unit>
-
     suspend fun signOut(): Result<Unit>
 }
 
@@ -46,14 +41,11 @@ interface ConversationRepository {
 }
 
 interface MessageRepository {
-    suspend fun listRecentMessages(
-        conversationId: ConversationId
-    ): Result<List<MessageSummary>>
+    suspend fun listRecentMessages(conversationId: ConversationId): Result<List<MessageSummary>>
 }
 
 interface MessagingSyncController {
     suspend fun start(): Result<Unit>
-
     suspend fun stop(): Result<Unit>
 }
 
