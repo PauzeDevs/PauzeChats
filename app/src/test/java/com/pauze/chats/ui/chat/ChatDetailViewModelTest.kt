@@ -4,7 +4,6 @@
 
 package com.pauze.chats.ui.chat
 
-import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.pauze.chats.messaging.ConversationId
 import com.pauze.chats.messaging.MessageRepository
 import com.pauze.chats.messaging.MessageSummary
@@ -19,11 +18,9 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestWatcher
@@ -32,19 +29,7 @@ import org.junit.runner.Description
 @OptIn(ExperimentalCoroutinesApi::class)
 class ChatDetailViewModelTest {
     @get:Rule
-    val instantTaskExecutorRule = InstantTaskExecutorRule()
-
-    private val mainDispatcherRule = MainDispatcherRule()
-
-    @Before
-    fun setUp() {
-        Dispatchers.setMain(mainDispatcherRule.dispatcher)
-    }
-
-    @After
-    fun tearDown() {
-        Dispatchers.resetMain()
-    }
+    val mainDispatcherRule = MainDispatcherRule()
 
     @Test
     fun observesTimelineAndClearsLoadingState() = runTest {
@@ -56,7 +41,7 @@ class ChatDetailViewModelTest {
         assertEquals(emptyList<MessageSummary>(), viewModel.state.value.messages)
 
         val message = MessageSummary(
-            id = com.pauze.chats.messaging.MessageId("$event:example.org"),
+            id = com.pauze.chats.messaging.MessageId("event-1"),
             conversationId = ConversationId("!room:example.org"),
             senderName = "Aarav",
             bodyPreview = "Hello",
