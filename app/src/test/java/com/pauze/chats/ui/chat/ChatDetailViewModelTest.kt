@@ -5,6 +5,7 @@
 package com.pauze.chats.ui.chat
 
 import com.pauze.chats.messaging.ConversationId
+import com.pauze.chats.messaging.MessageId
 import com.pauze.chats.messaging.MessageRepository
 import com.pauze.chats.messaging.MessageSummary
 import kotlinx.coroutines.CompletableDeferred
@@ -20,7 +21,6 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestWatcher
@@ -41,7 +41,7 @@ class ChatDetailViewModelTest {
         assertEquals(emptyList<MessageSummary>(), viewModel.state.value.messages)
 
         val message = MessageSummary(
-            id = com.pauze.chats.messaging.MessageId("event-1"),
+            id = MessageId("event-1"),
             conversationId = ConversationId("!room:example.org"),
             senderName = "Aarav",
             bodyPreview = "Hello",
