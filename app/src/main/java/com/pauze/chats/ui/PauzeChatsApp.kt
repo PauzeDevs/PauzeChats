@@ -238,7 +238,7 @@ private fun ChatDetailRoute(
         state = chatState,
         onBack = onBack,
         onDraftChange = chatDetailViewModel::setDraft,
-        onSend = chatDetailViewModel::sendText,
+        onSend = { chatDetailViewModel.sendText() },
         onToggleStickers = chatDetailViewModel::toggleStickerPicker,
         onStickerSelected = { sticker -> chatDetailViewModel.sendSticker(sticker.emoji) }
     )
