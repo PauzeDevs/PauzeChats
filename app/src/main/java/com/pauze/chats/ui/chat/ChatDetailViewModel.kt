@@ -50,8 +50,7 @@ class ChatDetailViewModel(
                     _state.update {
                         it.copy(
                             isLoading = false,
-                            messages = messages,
-                            message = if (it.isSending) it.message else null
+                            messages = messages
                         )
                     }
                 }
