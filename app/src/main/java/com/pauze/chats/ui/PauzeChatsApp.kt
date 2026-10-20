@@ -32,7 +32,7 @@ import com.pauze.chats.PauzeChatsApplication
 import com.pauze.chats.messaging.ConversationSummary
 import com.pauze.chats.ui.auth.AuthScreen
 import com.pauze.chats.ui.chat.ChatDetailScreen
-import com.pauze.chats.ui.chat.ChatDetailUiState
+import com.pauze.chats.ui.chat.ChatDetailViewModel
 import com.pauze.chats.ui.chat.ChatsScreen
 import com.pauze.chats.ui.chat.ChatsViewModel
 import com.pauze.chats.ui.auth.AuthViewModel
@@ -94,14 +94,9 @@ private fun AuthenticatedApp(
     val socialState by socialViewModel.state.collectAsStateWithLifecycle()
 
     if (selectedConversation != null) {
-        val conversation = selectedConversation!!
-
-        ChatDetailScreen(
-            title = conversation.title,
-            state = ChatDetailUiState(
-                isLoading = false,
-                message = "Message history adapter is being integrated for this Matrix SDK version."
-            ),
+        ChatDetailRoute(
+            conversation = selectedConversation!!,
+            messageRepository = application.messageRepository,
             onBack = { selectedConversation = null }
         )
         return
@@ -220,4 +215,31 @@ private fun ChatsFoundationScreen(modifier: Modifier = Modifier) {
             )
         }
     }
+}
+
+
+@Composable
+private fun ChatDetailRoute(
+    conversation: ConversationSummary,
+    messageRepository: com.pauze.chats.messaging.MessageRepository,
+    onBack: () -> Unit
+) {
+    val chatDetailViewModel: ChatDetailViewModel = viewModel(
+        key = "chat-${conversation.id.value}",
+        factory = ChatDetailViewModel.Factory(
+            conversationId = conversation.id,
+            messageRepository = messageRepository
+        )
+    )
+    val chatState by chatDetailViewModel.state.collectAsStateWithLifecycle()
+
+    ChatDetailScreen(
+        title = conversation.title,
+        state = chatState,
+        onBack = onBack,
+        onDraftChange = chatDetailViewModel::setDraft,
+        onSend = chatDetailViewModel::sendText,
+        onToggleStickers = chatDetailViewModel::toggleStickerPicker,
+        onStickerSelected = { sticker -> chatDetailViewModel.sendSticker(sticker.emoji) }
+    )
 }
