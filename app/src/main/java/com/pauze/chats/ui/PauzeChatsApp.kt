@@ -60,7 +60,8 @@ fun PauzeChatsApp(
                 initialInviteCode = initialInviteCode,
                 onModeChange = authViewModel::setMode,
                 onSignIn = authViewModel::signIn,
-                onSignUp = authViewModel::signUp
+                onSignUp = authViewModel::signUp,
+                onClearError = authViewModel::clearError
             )
         } else {
             AuthenticatedApp(

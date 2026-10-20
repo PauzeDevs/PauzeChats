@@ -1,3 +1,7 @@
+/*
+ * Copyright © 2026 Aarav Singh (Pauze). All rights reserved.
+ */
+
 package com.pauze.chats.account
 
 @JvmInline
@@ -52,6 +56,8 @@ data class FriendRequest(
 )
 
 interface AuthRepository {
+    val isBackendConfigured: Boolean
+
     suspend fun signIn(credentials: AccountCredentials): Result<Session>
 
     suspend fun signUp(

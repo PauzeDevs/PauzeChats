@@ -79,6 +79,21 @@ Phase 2 is now active and builds the real messaging layer on top of the authenti
 - Android Keystore security boundary
 - GitHub Actions build/test workflow
 
+### Connecting Android to the account backend
+
+The Android client reads its HTTPS API URL from the Gradle property named
+pauzeApiBaseUrl or the environment variable named PAUZE_API_BASE_URL. Replace
+the example host below with the deployed PauzeChats API URL:
+
+```sh
+PAUZE_API_BASE_URL=https://api.example.com gradle --no-daemon :app:assembleDebug
+```
+
+When neither setting is present, the login screen stays interactive and
+explains that the account service address is missing. Submitting credentials
+then shows a configuration error; authentication requires the deployed backend.
+The client rejects cleartext HTTP URLs.
+
 ## Architecture
 
 PauzeChats owns the application-level messaging contracts while Matrix is isolated behind implementation-specific adapters.
