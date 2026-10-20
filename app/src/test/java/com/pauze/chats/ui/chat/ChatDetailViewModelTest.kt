@@ -131,7 +131,7 @@ class ChatDetailViewModelTest {
         }
     }
 
-    private class MainDispatcherRule(
+    class MainDispatcherRule(
         val dispatcher: TestDispatcher = StandardTestDispatcher()
     ) : TestWatcher() {
         override fun starting(description: Description) {
